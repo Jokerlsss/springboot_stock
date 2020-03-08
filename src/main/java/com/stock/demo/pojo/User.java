@@ -8,6 +8,7 @@ import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import javax.persistence.Transient;
 import java.util.Collection;
 
 /**
@@ -33,6 +34,13 @@ public class User implements UserDetails {
 
     @TableField("investmentCharacter")
     private String inertmentCharacter;
+
+    // 非表字段注解
+    @Transient
+    private String job;
+
+    @Transient
+    private Float money;
 
     //    实现了UserDetails接口之后生成的方法
     @Override

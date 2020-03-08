@@ -3,6 +3,8 @@ package com.stock.demo.service;
 import com.stock.demo.pojo.User;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 /**
  * Created with IntelliJ IDEA.
  * User: 刘铄
@@ -12,4 +14,6 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public interface UserService extends BaseService<User>{
+    // TODO:删除该多表测试
+    public List<User> selectFromMoreTable();
 }

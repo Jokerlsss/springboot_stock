@@ -17,6 +17,7 @@ import java.util.Collection;
  * Time: 12:09
  * Description: 职位表
  */
+// TODO:删除该测试多表的类
 @TableName("job")
 @Data
 public class Job{
@@ -27,4 +28,7 @@ public class Job{
 
     @TableField("job")
     private String job;
+
+    @TableField("money")
+    private Float money;
 }

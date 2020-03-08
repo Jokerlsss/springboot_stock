@@ -66,4 +66,9 @@ public class UserServiceImpl implements UserService {
     public IPage<User> pagerByName(Wrapper<User> wrapper, Long pageNum, Long pageSize) {
         return null;
     }
+
+    @Override
+    public List<User> selectFromMoreTable() {
+        return userMapper.selectFromMoreTable();
+    }
 }

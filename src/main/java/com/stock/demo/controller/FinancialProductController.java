@@ -2,12 +2,11 @@ package com.stock.demo.controller;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.stock.demo.pojo.User;
-import com.stock.demo.service.UserService;
+import com.stock.demo.pojo.FinancialProduct;
+import com.stock.demo.service.FinancialProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -15,32 +14,25 @@ import java.util.List;
 /**
  * Created with IntelliJ IDEA.
  * User: 刘铄
- * Date: 2020/3/6
- * Time: 10:55
+ * Date: 2020/3/7
+ * Time: 17:26
  * Description:
  */
 @RestController
-@RequestMapping(path={"/user"})
-public class UserController implements BaseController<User>{
+@RequestMapping(path={"/financialProduct"})
+public class FinancialProductController implements BaseController<FinancialProduct>{
 
     @Autowired
-private UserService userService;
+    FinancialProductService financialProductService;
 
     @Override
     @GetMapping("list")
-    public List<User> list() {
-        return userService.list();
+    public List<FinancialProduct> list() {
+        return financialProductService.selectStockBaseInfo();
     }
-
-    // TODO:删除该多表测试
-    @GetMapping("moretable")
-    public List<User> listMore(){
-        return userService.selectFromMoreTable();
-    }
-
 
     @Override
-    public int insert(User bean) {
+    public int insert(FinancialProduct bean) {
         return 0;
     }
 
@@ -50,14 +42,13 @@ private UserService userService;
     }
 
     @Override
-    public int update(User bean) {
+    public int update(FinancialProduct bean) {
         return 0;
     }
 
     @Override
-    @GetMapping("loadById")
-    public User load(@RequestParam(value="userID",required = false) Long userID) {
-        return userService.load(userID);
+    public FinancialProduct load(Long id) {
+        return null;
     }
 
     @Override
@@ -66,17 +57,17 @@ private UserService userService;
     }
 
     @Override
-    public IPage<User> pager(Long pageNum, Long pageSize) {
+    public IPage<FinancialProduct> pager(Long pageNum, Long pageSize) {
         return null;
     }
 
     @Override
-    public User loadByName(String name) {
+    public FinancialProduct loadByName(String name) {
         return null;
     }
 
     @Override
-    public IPage<User> pagerByName(Wrapper<User> wrapper, Long pageNum, Long pageSize) {
+    public IPage<FinancialProduct> pagerByName(Wrapper<FinancialProduct> wrapper, Long pageNum, Long pageSize) {
         return null;
     }
 }
