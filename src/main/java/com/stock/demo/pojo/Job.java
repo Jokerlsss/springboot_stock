@@ -23,10 +23,10 @@ import java.util.Collection;
 public class Job{
     public Job(){}
 
-    @TableId(value = "userID",type = IdType.AUTO)
+    @TableField(value = "userID")
     private Long userID;
 
-    @TableField("job")
+    @TableId("job")
     private String job;
 
     @TableField("money")
