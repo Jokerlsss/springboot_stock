@@ -5,30 +5,22 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
-import javax.persistence.Table;
-import java.io.Serializable;
-import java.util.Date;
-
 /**
  * Created with IntelliJ IDEA.
  * User: 刘铄
- * Date: 2020/3/8
- * Time: 11:35
+ * Date: 2020/3/22
+ * Time: 18:15
  * Description:
  */
-@TableName("stock")
+@TableName("gold")
 @Data
-public class Stock implements Serializable {
-    private static final long serialVersionUID = 5711245009813139951L;
-
-    public Stock(){}
+public class Gold {
+    public Gold(){}
 
     @TableId(value = "productCode")
     private String productCode;
 
-    @TableField(value = "dateOfEstablishment")
-    private Date dateOfEstablishment;
-
+    // 发行价格
     @TableField("issuePrice")
     private Float issuePrice;
 }

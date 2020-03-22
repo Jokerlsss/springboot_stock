@@ -7,6 +7,7 @@ import com.stock.demo.pojo.FinancialProduct;
 import com.stock.demo.service.FinancialProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
 import java.util.List;
 
@@ -30,7 +31,7 @@ public class FinancialProductServiceImpl implements FinancialProductService {
 
     @Override
     public int insert(FinancialProduct bean) {
-        return 0;
+        return financialProductMapper.insert(bean);
     }
 
     @Override
@@ -50,7 +51,7 @@ public class FinancialProductServiceImpl implements FinancialProductService {
 
     @Override
     public Integer count() {
-        return null;
+        return financialProductMapper.selectCount(null);
     }
 
     @Override
@@ -71,5 +72,26 @@ public class FinancialProductServiceImpl implements FinancialProductService {
     @Override
     public List<FinancialProduct> selectStockBaseInfo() {
         return financialProductMapper.selectStockBaseInfo();
+    }
+
+    @Override
+    public IPage<FinancialProduct> selectPage(IPage<FinancialProduct> ipage, Wrapper<FinancialProduct> wrapper) {
+        return financialProductMapper.selectPage(ipage,wrapper);
+    }
+
+    @Override
+    public List<FinancialProduct> selectByWrapper(Wrapper<FinancialProduct> wrapper) {
+        return financialProductMapper.selectList(wrapper);
+    }
+
+    /**
+     * 根据条件来更新
+     * @param bean
+     * @param wrapper
+     * @return
+     */
+    @Override
+    public int updateByWrapper(FinancialProduct bean, Wrapper<FinancialProduct> wrapper) {
+        return financialProductMapper.update(bean,wrapper);
     }
 }

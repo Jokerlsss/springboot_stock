@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import javax.persistence.Transient;
+import java.io.Serializable;
 import java.util.Date;
 
 /**
@@ -18,7 +19,9 @@ import java.util.Date;
  */
 @TableName("financialproduct")
 @Data
-public class FinancialProduct {
+public class FinancialProduct implements Serializable {
+    private static final long serialVersionUID = 1997544134838742728L;
+
     public FinancialProduct(){}
 
     @TableId(value = "productCode")
@@ -40,11 +43,12 @@ public class FinancialProduct {
     private int popularity;
 
     @TableField("listingStatus")
-    private int listingStatus;
+    private String listingStatus;
 
-    @Transient
+    @TableField("dateOfEstablishment")
     private String dateOfEstablishment;
 
-    @Transient
-    private Float issuePrice;
+    // TODO:该注解存在的话，在进行分页的controller会报错找不到该属性
+//    @Transient
+//    private Float issuePrice;
 }
