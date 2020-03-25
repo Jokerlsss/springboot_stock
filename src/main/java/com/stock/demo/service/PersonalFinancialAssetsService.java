@@ -1,5 +1,6 @@
 package com.stock.demo.service;
 
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.stock.demo.pojo.PersonalFinancialAssets;
 import org.springframework.stereotype.Service;
 
@@ -14,5 +15,8 @@ import java.util.List;
  */
 @Service
 public interface PersonalFinancialAssetsService extends BaseService<PersonalFinancialAssets>{
+    // 查看用户拥有的资产
     public List<PersonalFinancialAssets> selectUserHoldProduct(Long userID);
+    // 根据条件删除项目
+    public int deleteByWrapper(Wrapper<PersonalFinancialAssets> wrapper);
 }

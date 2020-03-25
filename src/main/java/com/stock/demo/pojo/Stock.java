@@ -26,8 +26,6 @@ public class Stock implements Serializable {
     @TableId(value = "productCode")
     private String productCode;
 
-    @TableField(value = "dateOfEstablishment")
-    private Date dateOfEstablishment;
 
     @TableField("issuePrice")
     private Float issuePrice;

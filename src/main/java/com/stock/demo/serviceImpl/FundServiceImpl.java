@@ -2,9 +2,9 @@ package com.stock.demo.serviceImpl;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.stock.demo.mapper.StockMapper;
-import com.stock.demo.pojo.Stock;
-import com.stock.demo.service.StockService;
+import com.stock.demo.mapper.FundMapper;
+import com.stock.demo.pojo.Fund;
+import com.stock.demo.service.FundService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -13,24 +13,24 @@ import java.util.List;
 /**
  * Created with IntelliJ IDEA.
  * User: 刘铄
- * Date: 2020/3/8
- * Time: 11:47
+ * Date: 2020/3/23
+ * Time: 10:06
  * Description:
  */
 @Service
-public class StockServiceImpl implements StockService {
+public class FundServiceImpl implements FundService {
 
     @Autowired
-    StockMapper stockMapper;
+    FundMapper fundMapper;
 
     @Override
-    public List<Stock> list() {
+    public List<Fund> list() {
         return null;
     }
 
     @Override
-    public int insert(Stock bean) {
-        return stockMapper.insert(bean);
+    public int insert(Fund bean) {
+        return fundMapper.insert(bean);
     }
 
     @Override
@@ -39,12 +39,12 @@ public class StockServiceImpl implements StockService {
     }
 
     @Override
-    public int update(Stock bean) {
+    public int update(Fund bean) {
         return 0;
     }
 
     @Override
-    public Stock load(Long id) {
+    public Fund load(Long id) {
         return null;
     }
 
@@ -54,22 +54,22 @@ public class StockServiceImpl implements StockService {
     }
 
     @Override
-    public IPage<Stock> pager(Long pageNum, Long pageSize) {
+    public IPage<Fund> pager(Long pageNum, Long pageSize) {
         return null;
     }
 
     @Override
-    public Stock loadByName(String name) {
+    public Fund loadByName(String name) {
         return null;
     }
 
     @Override
-    public IPage<Stock> pagerByName(Wrapper<Stock> wrapper, Long pageNum, Long pageSize) {
+    public IPage<Fund> pagerByName(Wrapper<Fund> wrapper, Long pageNum, Long pageSize) {
         return null;
     }
 
     @Override
-    public Stock selectByWrapperReturnBean(Wrapper<Stock> wrapper) {
-        return stockMapper.selectOne(wrapper);
+    public Fund selectByWrapperReturnBean(Wrapper<Fund> wrapper) {
+        return fundMapper.selectOne(wrapper);
     }
 }

@@ -79,9 +79,19 @@ public class FinancialProductServiceImpl implements FinancialProductService {
         return financialProductMapper.selectPage(ipage,wrapper);
     }
 
+    /**
+     * 根据条件查询
+     * @param wrapper
+     * @return
+     */
     @Override
-    public List<FinancialProduct> selectByWrapper(Wrapper<FinancialProduct> wrapper) {
+    public List<FinancialProduct> selectByWrapperReturnList(Wrapper<FinancialProduct> wrapper) {
         return financialProductMapper.selectList(wrapper);
+    }
+
+    @Override
+    public FinancialProduct selectByWrapperReturnBean(Wrapper<FinancialProduct> wrapper) {
+        return financialProductMapper.selectOne(wrapper);
     }
 
     /**

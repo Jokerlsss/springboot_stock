@@ -73,4 +73,14 @@ public class PersonalFinancialAssetsServiceImpl implements PersonalFinancialAsse
     public List<PersonalFinancialAssets> selectUserHoldProduct(Long userID) {
         return personalFinancialAssetsMapper.selectUserHoldProduct(userID);
     }
+
+    /**
+     * 根据条件删除
+     * @param wrapper
+     * @return
+     */
+    @Override
+    public int deleteByWrapper(Wrapper<PersonalFinancialAssets> wrapper) {
+        return personalFinancialAssetsMapper.delete(wrapper);
+    }
 }

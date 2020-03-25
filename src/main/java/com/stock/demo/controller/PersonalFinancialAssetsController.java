@@ -1,14 +1,13 @@
 package com.stock.demo.controller;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.stock.demo.pojo.FinancialProduct;
 import com.stock.demo.pojo.PersonalFinancialAssets;
 import com.stock.demo.service.PersonalFinancialAssetsService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.jnlp.PersistenceService;
 import java.util.List;
@@ -35,6 +34,23 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
     @GetMapping("listById")
     public List<PersonalFinancialAssets> listById(@RequestParam(value="userID",required = false) Long userID){
         return personalFinancialAssetsService.selectUserHoldProduct(userID);
+    }
+
+    /**
+     * 根据 userID、个人资产ID 删除
+     * @param bean
+     * @return
+     */
+    // TODO: 异常处理
+    @PostMapping("deleteByWrapper")
+    public int deleteByWrapper(@RequestBody(required = false) PersonalFinancialAssets bean){
+        QueryWrapper<PersonalFinancialAssets> queryWrapper=new QueryWrapper<>();
+        Long userID=bean.getUserID();
+        Long PersonalFinancialAssetsID=bean.getPersonalFinancialAssetsID();
+        queryWrapper.eq("personalFinancialAssetsID",PersonalFinancialAssetsID);
+        queryWrapper.eq("userID",userID);
+        System.out.println("deleteByWrapper");
+        return personalFinancialAssetsService.deleteByWrapper(queryWrapper);
     }
 
 

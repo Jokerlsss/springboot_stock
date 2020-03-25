@@ -1,36 +1,45 @@
-package com.stock.demo.serviceImpl;
+package com.stock.demo.controller;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.stock.demo.mapper.StockMapper;
 import com.stock.demo.pojo.Stock;
 import com.stock.demo.service.StockService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
  * User: 刘铄
- * Date: 2020/3/8
- * Time: 11:47
- * Description:
+ * Date: 2020/3/24
+ * Time: 10:04
+ * Description: 股票
  */
-@Service
-public class StockServiceImpl implements StockService {
+@RestController
+@RequestMapping(path={"/stock"})
+public class StockController implements BaseController<Stock>{
 
     @Autowired
-    StockMapper stockMapper;
+    StockService stockService;
 
     @Override
     public List<Stock> list() {
         return null;
     }
 
+    /**
+     * 后台系统增加股票项目
+     * @param bean
+     * @return
+     */
     @Override
-    public int insert(Stock bean) {
-        return stockMapper.insert(bean);
+    @PostMapping("/insert")
+    public int insert(@RequestBody(required = false) Stock bean) {
+        return stockService.insert(bean);
     }
 
     @Override
@@ -66,10 +75,5 @@ public class StockServiceImpl implements StockService {
     @Override
     public IPage<Stock> pagerByName(Wrapper<Stock> wrapper, Long pageNum, Long pageSize) {
         return null;
-    }
-
-    @Override
-    public Stock selectByWrapperReturnBean(Wrapper<Stock> wrapper) {
-        return stockMapper.selectOne(wrapper);
     }
 }

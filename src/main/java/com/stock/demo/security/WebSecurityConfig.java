@@ -50,7 +50,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .permitAll();*/
         //  允许所有用户访问"/"和"/index.html"
         http.authorizeRequests()
-                .antMatchers("/user/*","/financialProduct/*","/job/*","/personalFinancialAssets/*").permitAll()
+                .antMatchers("/user/*","/financialProduct/*","/job/*","/personalFinancialAssets/*","/fundEarnings/*","/fund/*","/goldEarnings/*","/gold/*","/historicalOperation/*","/manager/*","/personalCollection/*","/regular/*","/regularEarnings/*","/stock/*","/stockEarnings/*").permitAll()
                 .anyRequest().authenticated()   // 其他地址的访问均需验证权限
                 .and()
                 .formLogin()

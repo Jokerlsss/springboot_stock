@@ -2,9 +2,9 @@ package com.stock.demo.serviceImpl;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.stock.demo.mapper.StockMapper;
-import com.stock.demo.pojo.Stock;
-import com.stock.demo.service.StockService;
+import com.stock.demo.mapper.GoldEarningsMapper;
+import com.stock.demo.pojo.GoldEarnings;
+import com.stock.demo.service.GoldEarningsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -13,24 +13,24 @@ import java.util.List;
 /**
  * Created with IntelliJ IDEA.
  * User: 刘铄
- * Date: 2020/3/8
- * Time: 11:47
+ * Date: 2020/3/23
+ * Time: 10:08
  * Description:
  */
 @Service
-public class StockServiceImpl implements StockService {
+public class GoldEarningsServiceImpl implements GoldEarningsService {
 
     @Autowired
-    StockMapper stockMapper;
+    GoldEarningsMapper goldEarningsMapper;
 
     @Override
-    public List<Stock> list() {
+    public List<GoldEarnings> list() {
         return null;
     }
 
     @Override
-    public int insert(Stock bean) {
-        return stockMapper.insert(bean);
+    public int insert(GoldEarnings bean) {
+        return 0;
     }
 
     @Override
@@ -39,12 +39,12 @@ public class StockServiceImpl implements StockService {
     }
 
     @Override
-    public int update(Stock bean) {
+    public int update(GoldEarnings bean) {
         return 0;
     }
 
     @Override
-    public Stock load(Long id) {
+    public GoldEarnings load(Long id) {
         return null;
     }
 
@@ -54,22 +54,17 @@ public class StockServiceImpl implements StockService {
     }
 
     @Override
-    public IPage<Stock> pager(Long pageNum, Long pageSize) {
+    public IPage<GoldEarnings> pager(Long pageNum, Long pageSize) {
         return null;
     }
 
     @Override
-    public Stock loadByName(String name) {
+    public GoldEarnings loadByName(String name) {
         return null;
     }
 
     @Override
-    public IPage<Stock> pagerByName(Wrapper<Stock> wrapper, Long pageNum, Long pageSize) {
+    public IPage<GoldEarnings> pagerByName(Wrapper<GoldEarnings> wrapper, Long pageNum, Long pageSize) {
         return null;
-    }
-
-    @Override
-    public Stock selectByWrapperReturnBean(Wrapper<Stock> wrapper) {
-        return stockMapper.selectOne(wrapper);
     }
 }

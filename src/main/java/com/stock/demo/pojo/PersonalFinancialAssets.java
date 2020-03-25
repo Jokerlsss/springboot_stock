@@ -20,17 +20,21 @@ import java.util.Date;
 public class PersonalFinancialAssets {
     public PersonalFinancialAssets(){}
 
+    /**
+     * 个人理财资产编号 + 用户ID 唯一决定一条记录
+     * 个人理财编号为：时间戳 + 个人资产序号
+     */
     /* 个人理财资产编号 */
     @TableId(value = "personalFinancialAssetsID")
     private Long personalFinancialAssetsID;
 
+    /* 用户编码 */
+    @TableId(value = "userID")
+    private Long userID;
+
     /* 产品代码 */
     @TableField(value = "productCode")
     private String productCode;
-
-    /* 用户编码 */
-    @TableField(value = "userID")
-    private Long userID;
 
     /* 交易平台 */
     @TableField(value = "platform")
