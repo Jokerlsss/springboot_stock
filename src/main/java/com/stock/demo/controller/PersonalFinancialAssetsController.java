@@ -60,8 +60,9 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
     }
 
     @Override
-    public int insert(PersonalFinancialAssets bean) {
-        return 0;
+    @PostMapping("insert")
+    public int insert(@RequestBody(required = false) PersonalFinancialAssets bean) {
+        return personalFinancialAssetsService.insert(bean);
     }
 
     @Override

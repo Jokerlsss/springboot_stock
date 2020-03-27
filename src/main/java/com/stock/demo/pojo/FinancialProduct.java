@@ -46,7 +46,7 @@ public class FinancialProduct implements Serializable {
     private String listingStatus;
 
     @TableField("dateOfEstablishment")
-    private String dateOfEstablishment;
+    private Date dateOfEstablishment;
 
     // TODO:该注解存在的话，在进行分页的controller会报错找不到该属性
 //    @Transient

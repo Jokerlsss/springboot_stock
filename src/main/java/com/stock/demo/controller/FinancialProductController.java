@@ -9,9 +9,15 @@ import com.stock.demo.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.stock.demo.util.DateOprate;
 
 /**
  * Created with IntelliJ IDEA.
@@ -53,13 +59,26 @@ public class FinancialProductController implements BaseController<FinancialProdu
     }
 
     /**
-     * 根据条件查询所有在市项目
+     * 根据 productType 条件查询所有在市项目
      * @param productType
      * @return
      */
     @GetMapping("listByWrapper")
-    public List<FinancialProduct> listByWrapper(@RequestParam(value = "productType", required=false ) String productType){
+    public List<FinancialProduct> listByWrapper(@RequestParam(value = "productType", required=false ) String productType) throws ParseException {
         QueryWrapper<FinancialProduct> queryWrapper=new QueryWrapper<>();
+// ---------- 从数据库查出日期，转换成 String 格式并判断是否为工作日-----------
+//        QueryWrapper<FinancialProduct> queryWrapper1=new QueryWrapper<>();
+//        queryWrapper1.eq("productCode",000000);
+//        FinancialProduct financialProduct=financialProductService.selectByWrapperReturnBean(queryWrapper1);
+//        Date time=financialProduct.getDateOfEstablishment();
+//        // Date -> String
+//        DateOprate dateOprate=new DateOprate();
+//        if(dateOprate.isWorkDay(time)){
+//            System.out.println("是工作日");
+//        }else{
+//            System.out.println("是周末");
+//        }
+// ---------------------------------------------------------------------
         queryWrapper.eq("productType",productType);
         queryWrapper.eq("listingStatus","在市");
         return financialProductService.selectByWrapperReturnList(queryWrapper);
@@ -144,6 +163,31 @@ public class FinancialProductController implements BaseController<FinancialProdu
             map.put("stock",stock);
         }
         return map;
+    }
+
+    /**
+     * 添加项目时，搜索项目
+     * @param productCode
+     * @param productName
+     * @return 搜索条件为空时，返回值为 []；否则返回实体类
+     */
+    @GetMapping("/searchProject")
+    public List<FinancialProduct> searchProject(@RequestParam(value = "productCode",required = false) String productCode,
+                                          @RequestParam(value = "productName",required = false) String productName){
+        // 从前端传过来的参数只能 productCode 或 productName 二选一
+        // 当 productCode 不为空时，则判断为通过代码搜索
+        // 当 productName 不为空时，则判断为通过名称搜索
+        if(!productCode.equals("") && productName.equals("")){
+            QueryWrapper<FinancialProduct> queryWrapper=new QueryWrapper<>();
+            queryWrapper.like("productCode",productCode);
+            return financialProductService.selectByWrapperReturnList(queryWrapper);
+        }else if(productCode.equals("") && !productName.equals("")){
+            QueryWrapper<FinancialProduct> queryWrapper=new QueryWrapper<>();
+            queryWrapper.like("productName",productName);
+            return financialProductService.selectByWrapperReturnList(queryWrapper);
+        }else{
+            return null;
+        }
     }
 
     @Override

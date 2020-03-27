@@ -22,8 +22,9 @@ public class SimulateEarnings {
      * @param lastDailyChange
      * @return dailyChange
      */
-    public float simulateDailyChange(float lastDailyChange){
+    public String simulateDailyChange(float lastDailyChange){
         float nowDailyChange=0;
+        DecimalFormat df =new DecimalFormat("#0.00");
         // DailyChange between -2 and 2
         if(lastDailyChange>-2 && lastDailyChange<=2){
             boolean isEarnings=countProbability(50);
@@ -63,7 +64,7 @@ public class SimulateEarnings {
             boolean isEarnings=countProbability(30);
             nowDailyChange = countNowDailyChange(isEarnings);
         }
-        return nowDailyChange;
+        return df.format(nowDailyChange);
     }
 
     /**
@@ -74,16 +75,15 @@ public class SimulateEarnings {
      */
     public float countNowDailyChange(boolean isEarnings){
         float nowDailyChange=0;
-        DecimalFormat df =new DecimalFormat("#0.00");
 
         if(isEarnings){
             float max=10,min=0;
             nowDailyChange = (float)(Math.random()*(max-min)+min);
-            System.out.println("收入:"+df.format(nowDailyChange));
+//            System.out.println("收入:"+df.format(nowDailyChange));
         }else{
             float max=0,min=-10;
             nowDailyChange = (float)(Math.random()*(max-min)+min);
-            System.out.println("亏损:"+df.format(nowDailyChange));
+//            System.out.println("亏损:"+df.format(nowDailyChange));
         }
         return nowDailyChange;
     }

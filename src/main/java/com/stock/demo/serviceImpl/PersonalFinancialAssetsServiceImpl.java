@@ -30,7 +30,7 @@ public class PersonalFinancialAssetsServiceImpl implements PersonalFinancialAsse
 
     @Override
     public int insert(PersonalFinancialAssets bean) {
-        return 0;
+        return personalFinancialAssetsMapper.insert(bean);
     }
 
     @Override
