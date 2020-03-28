@@ -66,19 +66,6 @@ public class FinancialProductController implements BaseController<FinancialProdu
     @GetMapping("listByWrapper")
     public List<FinancialProduct> listByWrapper(@RequestParam(value = "productType", required=false ) String productType) throws ParseException {
         QueryWrapper<FinancialProduct> queryWrapper=new QueryWrapper<>();
-// ---------- 从数据库查出日期，转换成 String 格式并判断是否为工作日-----------
-//        QueryWrapper<FinancialProduct> queryWrapper1=new QueryWrapper<>();
-//        queryWrapper1.eq("productCode",000000);
-//        FinancialProduct financialProduct=financialProductService.selectByWrapperReturnBean(queryWrapper1);
-//        Date time=financialProduct.getDateOfEstablishment();
-//        // Date -> String
-//        DateOprate dateOprate=new DateOprate();
-//        if(dateOprate.isWorkDay(time)){
-//            System.out.println("是工作日");
-//        }else{
-//            System.out.println("是周末");
-//        }
-// ---------------------------------------------------------------------
         queryWrapper.eq("productType",productType);
         queryWrapper.eq("listingStatus","在市");
         return financialProductService.selectByWrapperReturnList(queryWrapper);
@@ -102,7 +89,7 @@ public class FinancialProductController implements BaseController<FinancialProdu
     @PostMapping("insert")
     @Override
     public int insert(@RequestBody(required = false) FinancialProduct bean) {
-        System.out.println(bean);
+        // TODO: 在新增项目的同时，在 earnings 表中加入：代码、收益日期（等于发布日期）、净值（发布价格）、涨跌幅（第一天为 0）
         System.out.println("Insert product");
         return financialProductService.insert(bean);
     }

@@ -22,7 +22,7 @@ public class SimulateEarnings {
      * @param lastDailyChange
      * @return dailyChange
      */
-    public String simulateDailyChange(float lastDailyChange){
+    public float simulateDailyChange(float lastDailyChange){
         float nowDailyChange=0;
         DecimalFormat df =new DecimalFormat("#0.00");
         // DailyChange between -2 and 2
@@ -64,26 +64,25 @@ public class SimulateEarnings {
             boolean isEarnings=countProbability(30);
             nowDailyChange = countNowDailyChange(isEarnings);
         }
-        return df.format(nowDailyChange);
+        // 格式化：结果保留两位小数(String) -> 转换成 float 类型
+        float nowDailyChangeFloat = Float.parseFloat(df.format(nowDailyChange));
+        return nowDailyChangeFloat;
     }
 
     /**
      * To decide the price up or fall depend on probability
-     * TODO: Use df.format to change the grammar of data
      * @param isEarnings
      * @return nowDailyChange
      */
     public float countNowDailyChange(boolean isEarnings){
         float nowDailyChange=0;
-
+        // 设定涨跌幅最大值为10，最小值为-10
         if(isEarnings){
             float max=10,min=0;
             nowDailyChange = (float)(Math.random()*(max-min)+min);
-//            System.out.println("收入:"+df.format(nowDailyChange));
         }else{
             float max=0,min=-10;
             nowDailyChange = (float)(Math.random()*(max-min)+min);
-//            System.out.println("亏损:"+df.format(nowDailyChange));
         }
         return nowDailyChange;
     }
@@ -96,11 +95,13 @@ public class SimulateEarnings {
     public boolean countProbability(float probability){
         float max=100,min=1;
         float randomNum = (float)(Math.random()*(max-min)+min);
-        System.out.println("随机概率:"+randomNum);
+//        System.out.println("随机概率:"+randomNum);
         if(randomNum<=probability){
+            // 盈利
             isEarnings=true;
         }
         else{
+            // 亏损
             isEarnings=false;
         }
         return isEarnings;
