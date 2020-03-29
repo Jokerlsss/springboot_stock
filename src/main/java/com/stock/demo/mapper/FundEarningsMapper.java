@@ -3,6 +3,7 @@ package com.stock.demo.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.stock.demo.pojo.FundEarnings;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Select;
 
 /**
  * Created with IntelliJ IDEA.
@@ -13,4 +14,6 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface FundEarningsMapper  extends BaseMapper<FundEarnings> {
+    @Select("SELECT * FROM fundearnings where productCode=#{productCode} order by earningsDate DESC limit 0,1")
+    public FundEarnings selectLastStockEarnings(String productCode);
 }

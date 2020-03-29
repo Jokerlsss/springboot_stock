@@ -1,14 +1,10 @@
 package com.stock.demo;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.stock.demo.mapper.StockEarningsMapper;
-import com.stock.demo.mapper.StockMapper;
-import com.stock.demo.mapper.UserMapper;
-import com.stock.demo.pojo.FinancialProduct;
-import com.stock.demo.pojo.Stock;
-import com.stock.demo.pojo.StockEarnings;
-import com.stock.demo.pojo.User;
+import com.stock.demo.mapper.*;
+import com.stock.demo.pojo.*;
 import com.stock.demo.service.FinancialProductService;
+import com.stock.demo.service.GoldEarningsService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -34,6 +30,12 @@ class DemoApplicationTests {
 
     @Autowired
     private StockEarningsMapper stockEarningsMapper;
+
+    @Autowired
+    private FundEarningsMapper fundEarningsMapper;
+
+    @Autowired
+    private GoldEarningsMapper goldEarningsMapper;
 
     @Autowired
     private FinancialProductService financialProductService;
@@ -118,17 +120,15 @@ class DemoApplicationTests {
         QueryWrapper<FinancialProduct> listQueryWrapper=new QueryWrapper<>();
         listQueryWrapper.eq("listingStatus","在市");
         // 排除定期
-//        listQueryWrapper.ne("productType","定期");
+        listQueryWrapper.ne("productType","定期");
 
         List<FinancialProduct> financialProductList=financialProductService.selectByWrapperReturnList(listQueryWrapper);
-        System.out.println("size:"+financialProductList.size());
         for(int i=0;i<financialProductList.size();i++){
             if(financialProductList.get(i).getProductType().equals("股票")){
                 // 上次收益记录 = 查找上次收益记录(产品代码)
                 String productCode=financialProductList.get(i).getProductCode();
                 try {
                     // 查询：根据代码查找 earnings 表
-                    // TODO：将此方法复制到每一个mapper上
                     StockEarnings stockEarnings=stockEarningsMapper.selectLastStockEarnings(productCode);
 
                     // 赋值：查询到的上次收益记录
@@ -138,16 +138,52 @@ class DemoApplicationTests {
                     // 区分：类型用于在新增时区分调用的 service 层
                     String productType="股票";
 
-                    System.out.println("产品代码："+productCode+"开始计算 ->");
+                    System.out.println("产品代码："+productCode+" 类型：股票 开始计算 ->");
                     // 计算 & 生成：本次收益记录
                     dateOprate.countEarnings(productCode,lastDailyChange,lastEarningsDate,lastMarketValue,productType);
                 } catch (ParseException e) {
                     throw e;
                 }
             }else if(financialProductList.get(i).getProductType().equals("基金")){
-                // TODO: 基金
+                // 上次收益记录 = 查找上次收益记录(产品代码)
+                String productCode=financialProductList.get(i).getProductCode();
+                try {
+                    // 查询：根据代码查找 earnings 表
+                    FundEarnings fundEarnings=fundEarningsMapper.selectLastStockEarnings(productCode);
+
+                    // 赋值：查询到的上次收益记录
+                    Float lastDailyChange=fundEarnings.getDailyChange();
+                    Date lastEarningsDate=fundEarnings.getEarningsDate();
+                    Float lastMarketValue=fundEarnings.getNetWorth();
+                    // 区分：类型用于在新增时区分调用的 service 层
+                    String productType="基金";
+
+                    System.out.println("产品代码："+productCode+" 类型：基金 开始计算 ->");
+                    // 计算 & 生成：本次收益记录
+                    dateOprate.countEarnings(productCode,lastDailyChange,lastEarningsDate,lastMarketValue,productType);
+                } catch (ParseException e) {
+                    throw e;
+                }
             }else if(financialProductList.get(i).getProductType().equals("黄金")){
-                // TODO: 黄金
+                // 上次收益记录 = 查找上次收益记录(产品代码)
+                String productCode=financialProductList.get(i).getProductCode();
+                try {
+                    // 查询：根据代码查找 earnings 表
+                    GoldEarnings goldEarnings=goldEarningsMapper.selectLastStockEarnings(productCode);
+
+                    // 赋值：查询到的上次收益记录
+                    Float lastDailyChange=goldEarnings.getDailyChange();
+                    Date lastEarningsDate=goldEarnings.getEarningsDate();
+                    Float lastMarketValue=goldEarnings.getGoldPrice();
+                    // 区分：类型用于在新增时区分调用的 service 层
+                    String productType="黄金";
+
+                    System.out.println("产品代码："+productCode+" 类型：黄金 开始计算 ->");
+                    // 计算 & 生成：本次收益记录
+                    dateOprate.countEarnings(productCode,lastDailyChange,lastEarningsDate,lastMarketValue,productType);
+                } catch (ParseException e) {
+                    throw e;
+                }
             }
         }
     }

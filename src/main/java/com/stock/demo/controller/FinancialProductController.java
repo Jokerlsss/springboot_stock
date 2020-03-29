@@ -166,7 +166,7 @@ public class FinancialProductController implements BaseController<FinancialProdu
             GoldEarnings goldEarnings=new GoldEarnings();
             goldEarnings.setProductCode(productCode);
             goldEarnings.setEarningsDate(earningsDate);
-            goldEarnings.setSevenAnnualizedReturn(issuePrice);
+            goldEarnings.setGoldPrice(issuePrice);
             goldEarnings.setDailyChange(dailyChange);
 
             // 增加 Earnings 表记录

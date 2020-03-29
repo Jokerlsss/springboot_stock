@@ -3,10 +3,18 @@ package com.stock.demo.util;
 import com.alibaba.fastjson.serializer.CalendarCodec;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.stock.demo.pojo.FinancialProduct;
+import com.stock.demo.pojo.FundEarnings;
+import com.stock.demo.pojo.GoldEarnings;
+import com.stock.demo.pojo.StockEarnings;
 import com.stock.demo.service.FinancialProductService;
+import com.stock.demo.service.FundEarningsService;
+import com.stock.demo.service.GoldEarningsService;
+import com.stock.demo.service.StockEarningsService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.text.DateFormat;
+import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -20,9 +28,19 @@ import java.util.GregorianCalendar;
  * Time: 12:01
  * Description: About oprate of date
  */
+@Component("DateOprate")
 public class DateOprate {
     @Autowired
-    FinancialProductService financialProductService;
+    private FinancialProductService financialProductService;
+
+    @Autowired
+    private FundEarningsService fundEarningsService;
+
+    @Autowired
+    private GoldEarningsService goldEarningsService;
+
+    @Autowired
+    private StockEarningsService stockEarningsService;
     /**
      * 判断是否为工作日
      * @param date (String)
@@ -50,22 +68,28 @@ public class DateOprate {
      * @param date
      * @return
      */
-    public boolean isToday(Date date){
+    public boolean isTomorrowDay(Date date){
         // 返回 boolean 类型，让调用该方法的地方去进行循环，并加 1 天即可
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
 
+        // 求出明天的日期
+        Date todayDate=new Date();
+        GregorianCalendar gc=new GregorianCalendar();
+        gc.setTime(todayDate);
+        // 在今天的基础上加一天=明天
+        gc.add(5,1);
+        gc.getTime();
+
         // 转换当前日期格式为 String 方便比对，格式化如：2020-01-01
-        String todayDate = formatter.format(new Date());
+        String tomorrowDate = formatter.format(gc.getTime());
         String paramDate=formatter.format(date);
 
-//        String paramDate=formatter.format(date);
-        // 是今天的话，则停止生成，故返回false，反之亦然
-        // TODO: 在到3.27号时会变成2月7号，并且addDay仍在累加，为什么？
-        if(todayDate.equals(paramDate)){
-            System.out.println(paramDate+"是今天");
+        // 是明天的话，则停止生成，故返回false，反之亦然
+        if(tomorrowDate.equals(paramDate)){
+            System.out.println(paramDate+"是明天");
             return true;
         }else{
-            System.out.println(paramDate+"不是今天");
+            System.out.println(paramDate+"不是明天");
             return false;
         }
     }
@@ -97,15 +121,65 @@ public class DateOprate {
 
         // 把时间进行计算(Long类型) -> 转换成 String 类型 -> 转换成 Date 类型
         // 先加一天进行判断，如果需要继续加天数时，则在 while 末尾加 gc.add(5,addDay) 进行累加
-        while(!dateOprate.isToday(df.parse(df.format(gc.getTime())))){
+        while(!dateOprate.isTomorrowDay(df.parse(df.format(gc.getTime())))){
             // 将增加后的天数判断是否为工作日
-            if(dateOprate.isWorkDay(df.parse(df.format(lastEarningsDate.getTime() + addDay * 24 * 60 * 60 * 1000)))){
+            if(dateOprate.isWorkDay(df.parse(df.format(gc.getTime())))){
                 // 调用：模拟算法  参数：上次涨跌幅  返回值：float 类型涨跌幅
-                // TODO：根据类型调用不同的service层
                 float nowDailyChange=simulateEarnings.simulateDailyChange(lastDailyChange);
+
                 System.out.println(df.format(gc.getTime())+"工作日");
-                System.out.println(df.format(gc.getTime())+"涨跌幅为："+nowDailyChange);
-                System.out.println("-----------------------------");
+                System.out.println(df.format(gc.getTime())+"涨跌幅为："+nowDailyChange+"%");
+                // 生成：本次净值 = 上次净值 + 上次净值 * 本次涨跌幅
+                // TODO：本次净值：股票（2位小数）  基金（4位小数）  黄金（2位小数）
+                DecimalFormat dfTwo =new DecimalFormat("#0.00");
+                DecimalFormat dfFour =new DecimalFormat("#0.0000");
+                // 根据类型调用不同的service层来新增记录
+                if(productType.equals("股票")){
+                    // 保留两位小数
+                    float nowMarketValue=Float.parseFloat(dfTwo.format(lastMarketValue+(lastMarketValue*nowDailyChange)/100));
+
+                    // 将各字段信息存进实体类中
+                    StockEarnings stockEarnings=new StockEarnings();
+                    stockEarnings.setProductCode(productCode);
+                    stockEarnings.setEarningsDate(gc.getTime());
+                    stockEarnings.setStockMarketValue(nowMarketValue);
+                    stockEarnings.setDailyChange(nowDailyChange);
+
+                    System.out.println(stockEarnings);
+
+                    //TODO 空指针异常
+                    stockEarningsService.insert(stockEarnings);
+                    System.out.println("本次净值："+nowMarketValue);
+                    System.out.println("-----------------------------");
+                }else if(productType.equals("黄金")){
+                    float nowMarketValue=Float.parseFloat(dfTwo.format(lastMarketValue+(lastMarketValue*nowDailyChange)/100));
+
+                    // 将各字段信息存进实体类中
+                    GoldEarnings goldEarnings=new GoldEarnings();
+                    goldEarnings.setProductCode(productCode);
+                    goldEarnings.setEarningsDate(gc.getTime());
+                    goldEarnings.setGoldPrice(nowMarketValue);
+                    goldEarnings.setDailyChange(nowDailyChange);
+
+                    goldEarningsService.insert(goldEarnings);
+
+                    System.out.println("本次净值："+nowMarketValue);
+                    System.out.println("-----------------------------");
+                }else if(productType.equals("基金")){
+                    float nowMarketValue=Float.parseFloat(dfFour.format(lastMarketValue+(lastMarketValue*nowDailyChange)/100));
+
+                    // 将各字段信息存进实体类中
+                    FundEarnings fundEarnings=new FundEarnings();
+                    fundEarnings.setProductCode(productCode);
+                    fundEarnings.setEarningsDate(gc.getTime());
+                    fundEarnings.setNetWorth(nowMarketValue);
+                    fundEarnings.setDailyChange(nowDailyChange);
+
+                    fundEarningsService.insert(fundEarnings);
+
+                    System.out.println("本次净值："+nowMarketValue);
+                    System.out.println("-----------------------------");
+                }
             }else{
                 System.out.println(df.format(gc.getTime())+"周末");
                 System.out.println("-----------------------------");

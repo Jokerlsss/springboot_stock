@@ -25,8 +25,8 @@ public class GoldEarnings {
     @TableField("earningsDate")
     private Date earningsDate;
 
-    @TableField("sevenAnnualizedReturn")
-    private Float sevenAnnualizedReturn;
+    @TableField("goldPrice")
+    private Float goldPrice;
 
     @TableField("dailyChange")
     private Float dailyChange;
