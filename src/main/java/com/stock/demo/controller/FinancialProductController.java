@@ -45,6 +45,15 @@ public class FinancialProductController implements BaseController<FinancialProdu
     @Autowired
     StockService stockService;
 
+    @Autowired
+    StockEarningsService stockEarningsService;
+
+    @Autowired
+    GoldEarningsService goldEarningsService;
+
+    @Autowired
+    FundEarningsService fundEarningsService;
+
     /**
      * 根据 productCode 条件更新
      * @param bean
@@ -90,8 +99,81 @@ public class FinancialProductController implements BaseController<FinancialProdu
     @Override
     public int insert(@RequestBody(required = false) FinancialProduct bean) {
         // TODO: 在新增项目的同时，在 earnings 表中加入：代码、收益日期（等于发布日期）、净值（发布价格）、涨跌幅（第一天为 0）
-        System.out.println("Insert product");
-        return financialProductService.insert(bean);
+        // TODO 股票收益：产品代码(bean.getCode)、收益日期(bean.getDate)、股票市值(stock.selectone(code).getPrice)、日涨跌幅(0)
+        // TODO 基金收益：产品代码、收益日期、净值(fund.selectone(code).getPrice)、日涨跌幅
+        // TODO 黄金收益：产品代码、收益日期、金价(gold.selectone(code).getPrice)、日涨跌幅
+
+        // 增加 financialProduct 表记录
+        financialProductService.insert(bean);
+
+        String productType=bean.getProductType();
+        if(productType.equals("股票")){
+         // 获取产品代码、收益日期（第一天发布日期）、初始涨跌幅
+         String productCode=bean.getProductCode();
+         Date earningsDate=bean.getDateOfEstablishment();
+         float dailyChange=0;
+
+         // 获取发行价格
+         QueryWrapper<Stock> queryWrapper=new QueryWrapper<>();
+         queryWrapper.eq("productCode",productCode);
+         Stock stock=stockService.selectByWrapperReturnBean(queryWrapper);
+         float issuePrice=stock.getIssuePrice();
+
+         // 赋值给 Earnings 表
+         StockEarnings stockEarnings=new StockEarnings();
+         stockEarnings.setProductCode(productCode);
+         stockEarnings.setEarningsDate(earningsDate);
+         stockEarnings.setStockMarketValue(issuePrice);
+         stockEarnings.setDailyChange(dailyChange);
+
+         // 增加 Earnings 表记录
+         return stockEarningsService.insert(stockEarnings);
+        }else if(productType.equals("基金")){
+            // 获取产品代码、收益日期（第一天发布日期）、初始涨跌幅
+            String productCode=bean.getProductCode();
+            Date earningsDate=bean.getDateOfEstablishment();
+            float dailyChange=0;
+
+            // 获取发行价格
+            QueryWrapper<Fund> queryWrapper=new QueryWrapper<>();
+            queryWrapper.eq("productCode",productCode);
+            Fund fund=fundService.selectByWrapperReturnBean(queryWrapper);
+            // TODO: 有时候会空指针异常
+            float issuePrice=fund.getIssuePrice();
+
+            // 赋值给 Earnings 表
+            FundEarnings fundEarnings=new FundEarnings();
+            fundEarnings.setProductCode(productCode);
+            fundEarnings.setEarningsDate(earningsDate);
+            fundEarnings.setNetWorth(issuePrice);
+            fundEarnings.setDailyChange(dailyChange);
+
+            // 增加 Earnings 表记录
+            return fundEarningsService.insert(fundEarnings);
+        }else if(productType.equals("黄金")){
+            // 获取产品代码、收益日期（第一天发布日期）、初始涨跌幅
+            String productCode=bean.getProductCode();
+            Date earningsDate=bean.getDateOfEstablishment();
+            float dailyChange=0;
+
+            // 获取发行价格
+            QueryWrapper<Gold> queryWrapper=new QueryWrapper<>();
+            queryWrapper.eq("productCode",productCode);
+            Gold gold=goldService.selectByWrapperReturnBean(queryWrapper);
+            float issuePrice=gold.getIssuePrice();
+
+            // 赋值给 Earnings 表
+            GoldEarnings goldEarnings=new GoldEarnings();
+            goldEarnings.setProductCode(productCode);
+            goldEarnings.setEarningsDate(earningsDate);
+            goldEarnings.setSevenAnnualizedReturn(issuePrice);
+            goldEarnings.setDailyChange(dailyChange);
+
+            // 增加 Earnings 表记录
+            return goldEarningsService.insert(goldEarnings);
+        }else{
+            return financialProductService.insert(bean);
+        }
     }
 
     /**

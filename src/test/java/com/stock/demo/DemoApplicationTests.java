@@ -114,12 +114,12 @@ class DemoApplicationTests {
         // 声明：日期判断工具类
         DateOprate dateOprate=new DateOprate();
 
-        // 声明：模拟涨跌算法工具类
-        SimulateEarnings simulateEarnings=new SimulateEarnings();
-
         // 查询：financialProduct 代码  返回值：List<financialProduct>
         QueryWrapper<FinancialProduct> listQueryWrapper=new QueryWrapper<>();
         listQueryWrapper.eq("listingStatus","在市");
+        // 排除定期
+//        listQueryWrapper.ne("productType","定期");
+
         List<FinancialProduct> financialProductList=financialProductService.selectByWrapperReturnList(listQueryWrapper);
         System.out.println("size:"+financialProductList.size());
         for(int i=0;i<financialProductList.size();i++){
@@ -128,6 +128,7 @@ class DemoApplicationTests {
                 String productCode=financialProductList.get(i).getProductCode();
                 try {
                     // 查询：根据代码查找 earnings 表
+                    // TODO：将此方法复制到每一个mapper上
                     StockEarnings stockEarnings=stockEarningsMapper.selectLastStockEarnings(productCode);
 
                     // 赋值：查询到的上次收益记录

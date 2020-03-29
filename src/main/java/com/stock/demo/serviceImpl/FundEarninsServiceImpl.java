@@ -30,7 +30,7 @@ public class FundEarninsServiceImpl implements FundEarningsService {
 
     @Override
     public int insert(FundEarnings bean) {
-        return 0;
+        return fundEarningsMapper.insert(bean);
     }
 
     @Override
@@ -66,5 +66,10 @@ public class FundEarninsServiceImpl implements FundEarningsService {
     @Override
     public IPage<FundEarnings> pagerByName(Wrapper<FundEarnings> wrapper, Long pageNum, Long pageSize) {
         return null;
+    }
+
+    @Override
+    public FundEarnings selectByWrapperReturnBean(Wrapper<FundEarnings> wrapper) {
+        return fundEarningsMapper.selectOne(wrapper);
     }
 }

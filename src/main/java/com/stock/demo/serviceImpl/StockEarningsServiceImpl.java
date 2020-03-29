@@ -2,10 +2,13 @@ package com.stock.demo.serviceImpl;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.stock.demo.mapper.StockEarningsMapper;
 import com.stock.demo.pojo.StockEarnings;
 import com.stock.demo.service.StockEarningsService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.xml.ws.Action;
 import java.util.List;
 
 /**
@@ -17,6 +20,10 @@ import java.util.List;
  */
 @Service
 public class StockEarningsServiceImpl implements StockEarningsService {
+
+    @Autowired
+    StockEarningsMapper stockEarningsMapper;
+
     @Override
     public List<StockEarnings> list() {
         return null;
@@ -24,7 +31,7 @@ public class StockEarningsServiceImpl implements StockEarningsService {
 
     @Override
     public int insert(StockEarnings bean) {
-        return 0;
+        return stockEarningsMapper.insert(bean);
     }
 
     @Override
@@ -60,5 +67,10 @@ public class StockEarningsServiceImpl implements StockEarningsService {
     @Override
     public IPage<StockEarnings> pagerByName(Wrapper<StockEarnings> wrapper, Long pageNum, Long pageSize) {
         return null;
+    }
+
+    @Override
+    public StockEarnings selectByWrapperReturnBean(Wrapper<StockEarnings> wrapper) {
+        return stockEarningsMapper.selectOne(wrapper);
     }
 }

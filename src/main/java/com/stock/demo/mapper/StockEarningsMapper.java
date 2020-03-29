@@ -16,6 +16,6 @@ import java.util.List;
  */
 @Mapper
 public interface StockEarningsMapper extends BaseMapper<StockEarnings> {
-    @Select("SELECT * FROM stockearnings where productCode=#{productCode} order by earningsDate DESC limit 0,1")
+    @Select("SELECT * FROM stockearnings where productCode=#{productCode} order by earnings_date DESC limit 0,1")
     public StockEarnings selectLastStockEarnings(String productCode);
 }

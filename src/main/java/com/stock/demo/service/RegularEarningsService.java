@@ -1,5 +1,6 @@
 package com.stock.demo.service;
 
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.stock.demo.pojo.RegularEarnings;
 import org.springframework.stereotype.Service;
 
@@ -12,4 +13,5 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public interface RegularEarningsService extends BaseService<RegularEarnings>{
+    public RegularEarnings selectByWrapperReturnBean(Wrapper<RegularEarnings> wrapper);
 }

@@ -30,7 +30,7 @@ public class RegularEarningServiceImpl implements RegularEarningsService {
 
     @Override
     public int insert(RegularEarnings bean) {
-        return 0;
+        return regularEarningsMapper.insert(bean);
     }
 
     @Override
@@ -66,5 +66,10 @@ public class RegularEarningServiceImpl implements RegularEarningsService {
     @Override
     public IPage<RegularEarnings> pagerByName(Wrapper<RegularEarnings> wrapper, Long pageNum, Long pageSize) {
         return null;
+    }
+
+    @Override
+    public RegularEarnings selectByWrapperReturnBean(Wrapper<RegularEarnings> wrapper) {
+        return regularEarningsMapper.selectOne(wrapper);
     }
 }

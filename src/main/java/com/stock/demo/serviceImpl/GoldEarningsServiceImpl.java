@@ -30,7 +30,7 @@ public class GoldEarningsServiceImpl implements GoldEarningsService {
 
     @Override
     public int insert(GoldEarnings bean) {
-        return 0;
+        return goldEarningsMapper.insert(bean);
     }
 
     @Override
@@ -66,5 +66,10 @@ public class GoldEarningsServiceImpl implements GoldEarningsService {
     @Override
     public IPage<GoldEarnings> pagerByName(Wrapper<GoldEarnings> wrapper, Long pageNum, Long pageSize) {
         return null;
+    }
+
+    @Override
+    public GoldEarnings selectByWrapperReturnBean(Wrapper<GoldEarnings> wrapper) {
+        return goldEarningsMapper.selectOne(wrapper);
     }
 }

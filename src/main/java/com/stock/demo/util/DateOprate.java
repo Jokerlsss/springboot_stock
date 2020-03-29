@@ -11,6 +11,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 
 /**
  * Created with IntelliJ IDEA.
@@ -59,6 +60,7 @@ public class DateOprate {
 
 //        String paramDate=formatter.format(date);
         // 是今天的话，则停止生成，故返回false，反之亦然
+        // TODO: 在到3.27号时会变成2月7号，并且addDay仍在累加，为什么？
         if(todayDate.equals(paramDate)){
             System.out.println(paramDate+"是今天");
             return true;
@@ -85,21 +87,30 @@ public class DateOprate {
         // 判断传入日期是否为今天，若不是则继续增加 1 天，直到加到今天则停止
         int addDay=1;
 
+        // 声明：日期类供日期加减
+        // ---------------gc.add()----------------
+        // value为正则往后,为负则往前
+        // field取1加1年,取2加半年,取3加一季度,取4加一周
+        GregorianCalendar gc=new GregorianCalendar();
+        gc.setTime(lastEarningsDate);
+        gc.add(5,addDay);
+
         // 把时间进行计算(Long类型) -> 转换成 String 类型 -> 转换成 Date 类型
-        while(!dateOprate.isToday(df.parse(df.format(lastEarningsDate.getTime() + addDay * 24 * 60 * 60 * 1000)))){
+        // 先加一天进行判断，如果需要继续加天数时，则在 while 末尾加 gc.add(5,addDay) 进行累加
+        while(!dateOprate.isToday(df.parse(df.format(gc.getTime())))){
             // 将增加后的天数判断是否为工作日
             if(dateOprate.isWorkDay(df.parse(df.format(lastEarningsDate.getTime() + addDay * 24 * 60 * 60 * 1000)))){
                 // 调用：模拟算法  参数：上次涨跌幅  返回值：float 类型涨跌幅
                 // TODO：根据类型调用不同的service层
                 float nowDailyChange=simulateEarnings.simulateDailyChange(lastDailyChange);
-                System.out.println(df.format(lastEarningsDate.getTime() + addDay * 24 * 60 * 60 * 1000)+"工作日");
-                System.out.println(df.format(lastEarningsDate.getTime() + addDay * 24 * 60 * 60 * 1000)+"涨跌幅为："+nowDailyChange);
+                System.out.println(df.format(gc.getTime())+"工作日");
+                System.out.println(df.format(gc.getTime())+"涨跌幅为："+nowDailyChange);
                 System.out.println("-----------------------------");
             }else{
-                System.out.println(df.format(lastEarningsDate.getTime() + addDay * 24 * 60 * 60 * 1000)+"周末");
+                System.out.println(df.format(gc.getTime())+"周末");
                 System.out.println("-----------------------------");
             }
-            addDay=addDay+1;
+            gc.add(5,addDay);
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.stock.demo.service;
 
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.stock.demo.pojo.StockEarnings;
 import org.apache.ibatis.annotations.Select;
 import org.springframework.stereotype.Service;
@@ -13,4 +14,5 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public interface StockEarningsService extends BaseService<StockEarnings>{
+    public StockEarnings selectByWrapperReturnBean(Wrapper<StockEarnings> wrapper);
 }
