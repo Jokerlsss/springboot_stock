@@ -12,6 +12,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import com.stock.demo.util.SimulateEarnings;
 import com.stock.demo.util.DateOprate;
 
+import javax.annotation.Resource;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -21,6 +22,11 @@ import java.util.List;
 
 @SpringBootTest
 class DemoApplicationTests {
+
+    // 声明：日期判断工具类
+    // 声明的时候不要用 new 实例，而是通过 @Autowired 或者 @Resource
+    @Resource
+    private DateOprate dateOprate;
 
     @Autowired
     private UserMapper userMapper;
@@ -113,9 +119,6 @@ class DemoApplicationTests {
      */
     @Test
     public void insertEarnings() throws ParseException {
-        // 声明：日期判断工具类
-        DateOprate dateOprate=new DateOprate();
-
         // 查询：financialProduct 代码  返回值：List<financialProduct>
         QueryWrapper<FinancialProduct> listQueryWrapper=new QueryWrapper<>();
         listQueryWrapper.eq("listingStatus","在市");

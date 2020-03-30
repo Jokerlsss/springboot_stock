@@ -13,6 +13,8 @@ import com.stock.demo.service.StockEarningsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.ParseException;
@@ -28,8 +30,9 @@ import java.util.GregorianCalendar;
  * Time: 12:01
  * Description: About oprate of date
  */
-@Component("DateOprate")
+@Component
 public class DateOprate {
+
     @Autowired
     private FinancialProductService financialProductService;
 
@@ -94,7 +97,6 @@ public class DateOprate {
         }
     }
 
-
     public void countEarnings(String productCode,Float lastDailyChange,Date lastEarningsDate,Float lastMarketValue,String productType) throws ParseException {
         // 声明：日期操作工具类
         DateOprate dateOprate=new DateOprate();
@@ -122,6 +124,9 @@ public class DateOprate {
         // 把时间进行计算(Long类型) -> 转换成 String 类型 -> 转换成 Date 类型
         // 先加一天进行判断，如果需要继续加天数时，则在 while 末尾加 gc.add(5,addDay) 进行累加
         while(!dateOprate.isTomorrowDay(df.parse(df.format(gc.getTime())))){
+            // 传进来的为 3月4号 ，但在添加数据库时变成3月3号，导致主键重复
+            // 因此在一开始便对日期加1进行操作即可解决
+            gc.add(5,1);
             // 将增加后的天数判断是否为工作日
             if(dateOprate.isWorkDay(df.parse(df.format(gc.getTime())))){
                 // 调用：模拟算法  参数：上次涨跌幅  返回值：float 类型涨跌幅
@@ -145,9 +150,8 @@ public class DateOprate {
                     stockEarnings.setStockMarketValue(nowMarketValue);
                     stockEarnings.setDailyChange(nowDailyChange);
 
-                    System.out.println(stockEarnings);
+                    System.out.println("time"+gc.getTime());
 
-                    //TODO 空指针异常
                     stockEarningsService.insert(stockEarnings);
                     System.out.println("本次净值："+nowMarketValue);
                     System.out.println("-----------------------------");
@@ -184,7 +188,7 @@ public class DateOprate {
                 System.out.println(df.format(gc.getTime())+"周末");
                 System.out.println("-----------------------------");
             }
-            gc.add(5,addDay);
+//            gc.add(5,addDay);
         }
     }
 }
