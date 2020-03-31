@@ -5,6 +5,7 @@ import com.stock.demo.pojo.StockEarnings;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -18,4 +19,7 @@ import java.util.List;
 public interface StockEarningsMapper extends BaseMapper<StockEarnings> {
     @Select("SELECT * FROM stockearnings where productCode=#{productCode} order by earnings_date DESC limit 0,1")
     public StockEarnings selectLastStockEarnings(String productCode);
+
+//    @Select("select * from stockearnings where earnings_date=#{buyTime} and productCode=#{productCode}")
+//    public StockEarnings selectDateOfPrice(Date buyTime, String productCode);
 }

@@ -3,6 +3,7 @@ package com.stock.demo.controller;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 
+import java.text.ParseException;
 import java.util.List;
 
 /**
@@ -14,7 +15,7 @@ import java.util.List;
  */
 public interface BaseController<T> {
     List<T> list();
-    int insert(T bean);
+    int insert(T bean) throws ParseException;
     int delete(Long id);
     int update(T bean);
     T load(Long id);

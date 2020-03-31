@@ -207,6 +207,7 @@ public class FinancialProductController implements BaseController<FinancialProdu
 
         FinancialProduct financialProduct=financialProductService.selectByWrapperReturnBean(queryWrapper);
 
+        System.out.println(financialProduct.getProductType());
         map.put("financialProduct",financialProduct);
         // 根据不同类型类读取不同实体类的详细页数据
         // 将查询出来的实体类复制给 map，并用 map 作为返回值

@@ -1,5 +1,6 @@
 package com.stock.demo.pojo;
 
+import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -25,12 +26,12 @@ public class PersonalFinancialAssets {
      * 个人理财编号为：时间戳 + 个人资产序号
      */
     /* 个人理财资产编号 */
-    @TableId(value = "personalFinancialAssetsID")
+    @TableId(value = "personalFinancialAssetsID",type = IdType.AUTO)
     private Long personalFinancialAssetsID;
 
     /* 用户编码 */
-    @TableId(value = "userID")
-    private Long userID;
+    @TableId(value = "userid")
+    private Long userid;
 
     /* 产品代码 */
     @TableField(value = "productCode")
@@ -42,11 +43,11 @@ public class PersonalFinancialAssets {
 
     /* 持有份额 */
     @TableField(value = "amountOfAssets")
-    private Float amountOfAssets;
+    private float amountOfAssets;
 
     /* 持仓成本 */
     @TableField(value = "holdingCost")
-    private Float holdingCost;
+    private float holdingCost;
 
     /* 买入时间 */
     @TableField(value = "buyTime")
@@ -60,10 +61,10 @@ public class PersonalFinancialAssets {
     @TableField(value = "status")
     private Long status;
 
-    // 理财产品表
-    @Transient
-    private String productName;
-
-    @Transient
-    private String productType;
+//    // 理财产品表
+//    @Transient
+//    private String productName;
+//
+//    @Transient
+//    private String productType;
 }

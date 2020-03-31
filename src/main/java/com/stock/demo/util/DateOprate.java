@@ -135,7 +135,6 @@ public class DateOprate {
                 System.out.println(df.format(gc.getTime())+"工作日");
                 System.out.println(df.format(gc.getTime())+"涨跌幅为："+nowDailyChange+"%");
                 // 生成：本次净值 = 上次净值 + 上次净值 * 本次涨跌幅
-                // TODO：本次净值：股票（2位小数）  基金（4位小数）  黄金（2位小数）
                 DecimalFormat dfTwo =new DecimalFormat("#0.00");
                 DecimalFormat dfFour =new DecimalFormat("#0.0000");
                 // 根据类型调用不同的service层来新增记录
@@ -188,7 +187,6 @@ public class DateOprate {
                 System.out.println(df.format(gc.getTime())+"周末");
                 System.out.println("-----------------------------");
             }
-//            gc.add(5,addDay);
         }
     }
 }
