@@ -83,4 +83,9 @@ public class PersonalFinancialAssetsServiceImpl implements PersonalFinancialAsse
     public int deleteByWrapper(Wrapper<PersonalFinancialAssets> wrapper) {
         return personalFinancialAssetsMapper.delete(wrapper);
     }
+
+    @Override
+    public int selectByWrapper(Wrapper<PersonalFinancialAssets> wrapper) {
+        return personalFinancialAssetsMapper.selectCount(wrapper);
+    }
 }

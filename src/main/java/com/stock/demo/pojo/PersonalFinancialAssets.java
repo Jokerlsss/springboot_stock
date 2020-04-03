@@ -61,6 +61,19 @@ public class PersonalFinancialAssets {
     @TableField(value = "status")
     private Long status;
 
+    @TableField(value = "productName")
+    private String productName;
+
+//    今天收益
+    @TableField(value = "dayEarn")
+    private String dayEarn;
+
+//    持有收益
+    @TableField(value = "holdEarn")
+    private String holdEarn;
+
+
+
 //    // 理财产品表
 //    @Transient
 //    private String productName;

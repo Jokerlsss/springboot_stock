@@ -19,4 +19,6 @@ public interface PersonalFinancialAssetsService extends BaseService<PersonalFina
     public List<PersonalFinancialAssets> selectUserHoldProduct(Long userID);
     // 根据条件删除项目
     public int deleteByWrapper(Wrapper<PersonalFinancialAssets> wrapper);
+    // 根据 wrapper 查询
+    public int selectByWrapper(Wrapper<PersonalFinancialAssets> wrapper);
 }
