@@ -119,7 +119,7 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
         personalFinancialAssetsQueryWrapper.eq("userid",bean.getUserid());
         personalFinancialAssetsQueryWrapper.eq("productCode",bean.getProductCode());
         personalFinancialAssetsQueryWrapper.eq("status",0);
-        int isExist=personalFinancialAssetsService.selectByWrapper(personalFinancialAssetsQueryWrapper);
+        int isExist=personalFinancialAssetsService.selectByWrapperReturnInt(personalFinancialAssetsQueryWrapper);
         System.out.println("isExist:"+isExist);
         /** 判断：某用户的产品代码存在 且 资产状态为持有时，不能新增 */
         if(isExist==0){
@@ -156,8 +156,8 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
                 /** 在日期原有基础上增加一天，弥补系统少算的一天 */
                 GregorianCalendar gc=new GregorianCalendar();
                 gc.setTime(bean.getBuyTime());
-                // 在今天的基础上加一天=明天
-                gc.add(5,1);
+                // 由于存进mysql时会减少一天，故在今天的基础上加一天=明天
+//                gc.add(5,1);
                 bean.setBuyTime(gc.getTime());
 
                 return personalFinancialAssetsService.insert(bean);

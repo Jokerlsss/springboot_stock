@@ -11,6 +11,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import com.stock.demo.util.SimulateEarnings;
 import com.stock.demo.util.DateOprate;
+import com.stock.demo.util.UpdateEarn;
 
 import javax.annotation.Resource;
 import java.text.DateFormat;
@@ -27,6 +28,9 @@ class DemoApplicationTests {
     // 声明的时候不要用 new 实例，而是通过 @Autowired 或者 @Resource
     @Resource
     private DateOprate dateOprate;
+
+    @Autowired
+    private UpdateEarn updateEarn;
 
     @Autowired
     private UserMapper userMapper;
@@ -189,6 +193,15 @@ class DemoApplicationTests {
                 }
             }
         }
+        // TODO: 添加更新个人资产中今日收益和持有收益的方法
+    }
+
+    /**
+     * 更新每日收益 & 持有收益
+     */
+    @Test
+    public void updateDayEarn(){
+        updateEarn.updateDayEarn();
     }
 
     /**

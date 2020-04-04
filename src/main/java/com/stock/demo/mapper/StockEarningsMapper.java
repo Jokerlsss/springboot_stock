@@ -20,6 +20,7 @@ public interface StockEarningsMapper extends BaseMapper<StockEarnings> {
     @Select("SELECT * FROM stockearnings where productCode=#{productCode} order by earnings_date DESC limit 0,1")
     public StockEarnings selectLastStockEarnings(String productCode);
 
-//    @Select("select * from stockearnings where earnings_date=#{buyTime} and productCode=#{productCode}")
-//    public StockEarnings selectDateOfPrice(Date buyTime, String productCode);
+    /** 查询倒数第二条收益记录 */
+    @Select("SELECT * FROM stockEarnings where productCode=#{productCode} order by earnings_date DESC limit 1,1")
+    public StockEarnings selectLastTwoStockEarnings(String productCode);
 }

@@ -124,10 +124,6 @@ public class DateOprate {
         // 把时间进行计算(Long类型) -> 转换成 String 类型 -> 转换成 Date 类型
         // 先加一天进行判断，如果需要继续加天数时，则在 while 末尾加 gc.add(5,addDay) 进行累加
         while(!dateOprate.isTomorrowDay(df.parse(df.format(gc.getTime())))){
-            // 传进来的为 3月4号 ，但在添加数据库时变成3月3号，导致主键重复
-            // 因此在一开始便对日期加1进行操作即可解决
-            gc.add(5,1);
-            // 将增加后的天数判断是否为工作日
             if(dateOprate.isWorkDay(df.parse(df.format(gc.getTime())))){
                 // 调用：模拟算法  参数：上次涨跌幅  返回值：float 类型涨跌幅
                 float nowDailyChange=simulateEarnings.simulateDailyChange(lastDailyChange);
@@ -142,6 +138,7 @@ public class DateOprate {
                     // 保留两位小数
                     float nowMarketValue=Float.parseFloat(dfTwo.format(lastMarketValue+(lastMarketValue*nowDailyChange)/100));
 
+                    // TODO: 周五是工作日，没能存进数据库，周日缺存进去了，且所有数据都要往前移一位
                     // 将各字段信息存进实体类中
                     StockEarnings stockEarnings=new StockEarnings();
                     stockEarnings.setProductCode(productCode);
@@ -155,7 +152,7 @@ public class DateOprate {
                     System.out.println("本次净值："+nowMarketValue);
                     System.out.println("-----------------------------");
                 }else if(productType.equals("黄金")){
-                    float nowMarketValue=Float.parseFloat(dfTwo.format(lastMarketValue+(lastMarketValue*nowDailyChange)/100));
+                    float nowMarketValue=Float.parseFloat(dfFour.format(lastMarketValue+(lastMarketValue*nowDailyChange)/100));
 
                     // 将各字段信息存进实体类中
                     GoldEarnings goldEarnings=new GoldEarnings();
@@ -187,6 +184,8 @@ public class DateOprate {
                 System.out.println(df.format(gc.getTime())+"周末");
                 System.out.println("-----------------------------");
             }
+            /** 在循环结束后增加一天，由于将 Mysql 中的时区配置更改了，因此可以直接在最后累加一天 */
+            gc.add(5,1);
         }
     }
 }

@@ -14,6 +14,11 @@ import org.apache.ibatis.annotations.Select;
  */
 @Mapper
 public interface FundEarningsMapper  extends BaseMapper<FundEarnings> {
+    /** 查找最后一条收益记录 */
     @Select("SELECT * FROM fundearnings where productCode=#{productCode} order by earningsDate DESC limit 0,1")
     public FundEarnings selectLastStockEarnings(String productCode);
+
+    /** 查找倒数第二条收益记录 */
+    @Select("SELECT * FROM fundearnings where productCode=#{productCode} order by earningsDate DESC limit 1,1")
+    public FundEarnings selectLastTwoStockEarnings(String productCode);
 }

@@ -2,6 +2,7 @@ package com.stock.demo.service;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.stock.demo.pojo.PersonalFinancialAssets;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,5 +21,9 @@ public interface PersonalFinancialAssetsService extends BaseService<PersonalFina
     // 根据条件删除项目
     public int deleteByWrapper(Wrapper<PersonalFinancialAssets> wrapper);
     // 根据 wrapper 查询
-    public int selectByWrapper(Wrapper<PersonalFinancialAssets> wrapper);
+    public int selectByWrapperReturnInt(Wrapper<PersonalFinancialAssets> wrapper);
+    // 根据 wrapper 查询返回 Bean
+    public PersonalFinancialAssets selectByWrapperReturnBean(Wrapper<PersonalFinancialAssets> wrapper);
+    // 根据 wrapper 查询返回 List
+    public List<PersonalFinancialAssets> selectByWrapperReturnList(Wrapper<PersonalFinancialAssets> wrapper);
 }

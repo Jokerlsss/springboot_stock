@@ -85,7 +85,17 @@ public class PersonalFinancialAssetsServiceImpl implements PersonalFinancialAsse
     }
 
     @Override
-    public int selectByWrapper(Wrapper<PersonalFinancialAssets> wrapper) {
+    public int selectByWrapperReturnInt(Wrapper<PersonalFinancialAssets> wrapper) {
         return personalFinancialAssetsMapper.selectCount(wrapper);
+    }
+
+    @Override
+    public PersonalFinancialAssets selectByWrapperReturnBean(Wrapper<PersonalFinancialAssets> wrapper) {
+        return personalFinancialAssetsMapper.selectOne(wrapper);
+    }
+
+    @Override
+    public List<PersonalFinancialAssets> selectByWrapperReturnList(Wrapper<PersonalFinancialAssets> wrapper) {
+        return personalFinancialAssetsMapper.selectList(wrapper);
     }
 }
