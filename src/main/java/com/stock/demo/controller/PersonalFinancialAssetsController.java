@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.stock.demo.pojo.*;
 import com.stock.demo.service.*;
+import com.stock.demo.util.UpdateEarn;
 import org.springframework.beans.AbstractNestablePropertyAccessor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -40,6 +41,9 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
 
     @Autowired
     GoldEarningsService goldEarningsService;
+
+    @Autowired
+    UpdateEarn updateEarn;
 
     /**
      * 查询用户持有资产
@@ -139,6 +143,7 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
                 // 查询: 当天该产品净值，即为买入成本      参数：买入时间 & productCode
                 QueryWrapper<StockEarnings> stockWrapper=new QueryWrapper<>();
 
+                // 转换：将日期转换为String类型才可以查询到结果
                 SimpleDateFormat formatter = new SimpleDateFormat( "yyyy-MM-dd ");
                 String dateStirng =  formatter.format(bean.getBuyTime());
 
@@ -160,7 +165,11 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
 //                gc.add(5,1);
                 bean.setBuyTime(gc.getTime());
 
-                return personalFinancialAssetsService.insert(bean);
+                int insertFlag=personalFinancialAssetsService.insert(bean);
+                /** 调用工具类更新个人资产的今日收益和持有收益 */
+                updateEarn.updateDayEarn();
+                updateEarn.updateHoldEarn();
+                return insertFlag;
             }else if(productType.equals("基金")){
                 // 获取持仓成本（即买入金额）
                 float holdingCost=bean.getHoldingCost();
@@ -168,7 +177,6 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
                 // 查询: 当天该产品净值，即为买入成本      参数：买入时间 & productCode
                 QueryWrapper<FundEarnings> fundWrapper=new QueryWrapper<>();
                 // 转换：将日期转换为String类型才可以查询到结果
-                // TODO 用gcDate加上一天
                 SimpleDateFormat formatter = new SimpleDateFormat( "yyyy-MM-dd ");
                 String dateStirng =  formatter.format(bean.getBuyTime());
 
@@ -190,7 +198,12 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
                 gc.add(5,1);
                 bean.setBuyTime(gc.getTime());
                 // TODO: 当amountOfAssets<1时会变为0
-                return personalFinancialAssetsService.insert(bean);
+
+                int insertFlag=personalFinancialAssetsService.insert(bean);
+                /** 调用工具类更新个人资产的今日收益和持有收益 */
+                updateEarn.updateDayEarn();
+                updateEarn.updateHoldEarn();
+                return insertFlag;
             }else if(productType.equals("黄金")){
                 // 获取持仓成本（即买入金额）
                 float holdingCost=bean.getHoldingCost();
@@ -218,7 +231,13 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
                 // 在今天的基础上加一天=明天
                 gc.add(5,1);
                 bean.setBuyTime(gc.getTime());
-                return personalFinancialAssetsService.insert(bean);
+
+
+                int insertFlag=personalFinancialAssetsService.insert(bean);
+                /** 调用工具类更新个人资产的今日收益和持有收益 */
+                updateEarn.updateDayEarn();
+                updateEarn.updateHoldEarn();
+                return insertFlag;
             }else {
                 // TODO: 其他类型则返回 0 ，即新增失败
                 return 0;

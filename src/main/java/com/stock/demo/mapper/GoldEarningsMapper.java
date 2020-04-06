@@ -17,9 +17,9 @@ import org.apache.ibatis.annotations.Select;
 public interface GoldEarningsMapper extends BaseMapper<GoldEarnings> {
     /** 查询最后一条收益记录 */
     @Select("SELECT * FROM goldearnings where productCode=#{productCode} order by earningsDate DESC limit 0,1")
-    public GoldEarnings selectLastStockEarnings(String productCode);
+    public GoldEarnings selectLastOneEarnings(String productCode);
 
     /** 查询倒数第二条收益记录 */
     @Select("SELECT * FROM goldEarnings where productCode=#{productCode} order by earningsDate DESC limit 1,1")
-    public GoldEarnings selectLastTwoStockEarnings(String productCode);
+    public GoldEarnings selectLastTwoEarnings(String productCode);
 }

@@ -66,11 +66,14 @@ public class PersonalFinancialAssets {
 
 //    今天收益
     @TableField(value = "dayEarn")
-    private String dayEarn;
+    private float dayEarn;
 
 //    持有收益
     @TableField(value = "holdEarn")
-    private String holdEarn;
+    private float holdEarn;
+
+    @TableField(value = "holdAssets")
+    private float holdAssets;
 
 
 

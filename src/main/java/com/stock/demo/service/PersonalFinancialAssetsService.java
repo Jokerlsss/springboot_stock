@@ -26,4 +26,6 @@ public interface PersonalFinancialAssetsService extends BaseService<PersonalFina
     public PersonalFinancialAssets selectByWrapperReturnBean(Wrapper<PersonalFinancialAssets> wrapper);
     // 根据 wrapper 查询返回 List
     public List<PersonalFinancialAssets> selectByWrapperReturnList(Wrapper<PersonalFinancialAssets> wrapper);
+    // 根据 wrapper 更新 bean
+    public int updateByWrapper(PersonalFinancialAssets personalFinancialAssets,Wrapper<PersonalFinancialAssets> wrapper);
 }

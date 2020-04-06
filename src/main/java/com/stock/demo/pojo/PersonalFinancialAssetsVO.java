@@ -1,5 +1,6 @@
 package com.stock.demo.pojo;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 
 /**
@@ -14,7 +15,7 @@ public class PersonalFinancialAssetsVO{
     /** 今日收益 */
     private String dayEarn;
 
-    /** 资产 */
+    /** 持仓成本 */
     private float holdingCost;
 
     /** 持有收益 */
@@ -31,4 +32,7 @@ public class PersonalFinancialAssetsVO{
 
     /** 用户ID */
     private String userid;
+
+    /** 拥有资产 */
+    private float holdAssets;
 }

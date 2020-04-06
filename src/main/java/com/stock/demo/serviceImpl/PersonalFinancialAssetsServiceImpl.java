@@ -98,4 +98,15 @@ public class PersonalFinancialAssetsServiceImpl implements PersonalFinancialAsse
     public List<PersonalFinancialAssets> selectByWrapperReturnList(Wrapper<PersonalFinancialAssets> wrapper) {
         return personalFinancialAssetsMapper.selectList(wrapper);
     }
+
+    /**
+     * 根据 bean & wrapper 更新 今日收益 & 持有收益
+     * @param personalFinancialAssets
+     * @param wrapper
+     * @return
+     */
+    @Override
+    public int updateByWrapper(PersonalFinancialAssets personalFinancialAssets, Wrapper<PersonalFinancialAssets> wrapper) {
+        return personalFinancialAssetsMapper.update(personalFinancialAssets,wrapper);
+    }
 }

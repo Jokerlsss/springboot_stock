@@ -156,7 +156,7 @@ class DemoApplicationTests {
                 String productCode=financialProductList.get(i).getProductCode();
                 try {
                     // 查询：根据代码查找 earnings 表
-                    FundEarnings fundEarnings=fundEarningsMapper.selectLastStockEarnings(productCode);
+                    FundEarnings fundEarnings=fundEarningsMapper.selectLastOneEarnings(productCode);
 
                     // 赋值：查询到的上次收益记录
                     Float lastDailyChange=fundEarnings.getDailyChange();
@@ -176,7 +176,7 @@ class DemoApplicationTests {
                 String productCode=financialProductList.get(i).getProductCode();
                 try {
                     // 查询：根据代码查找 earnings 表
-                    GoldEarnings goldEarnings=goldEarningsMapper.selectLastStockEarnings(productCode);
+                    GoldEarnings goldEarnings=goldEarningsMapper.selectLastOneEarnings(productCode);
 
                     // 赋值：查询到的上次收益记录
                     Float lastDailyChange=goldEarnings.getDailyChange();
@@ -197,11 +197,12 @@ class DemoApplicationTests {
     }
 
     /**
-     * 更新每日收益 & 持有收益
+     * 更新每日收益 & 持有收益 & 资产总量
      */
     @Test
     public void updateDayEarn(){
         updateEarn.updateDayEarn();
+        updateEarn.updateHoldEarn();
     }
 
     /**
