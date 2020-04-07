@@ -22,46 +22,50 @@ public class SimulateEarnings {
      * @param lastDailyChange
      * @return dailyChange
      */
+    // TODO 净值的生成太过于平均且集中，如何加强随机性使得起伏更大呢？（非重点）
     public float simulateDailyChange(float lastDailyChange){
         float nowDailyChange=0;
         DecimalFormat df =new DecimalFormat("#0.00");
+        // 设置1-100之间的概率数
+        float max=100,min=1;
+        float randomNum = (float)(Math.random()*(max-min)+min);
         // DailyChange between -2 and 2
         if(lastDailyChange>-2 && lastDailyChange<=2){
-            boolean isEarnings=countProbability(50);
+            boolean isEarnings=countProbability(randomNum);
             nowDailyChange = countNowDailyChange(isEarnings);
         }
         // DailyChange between 2 and 10
         if(lastDailyChange>2 && lastDailyChange<=4){
-            boolean isEarnings=countProbability(45);
+            boolean isEarnings=countProbability(randomNum);
             nowDailyChange = countNowDailyChange(isEarnings);
         }
         if(lastDailyChange>4 && lastDailyChange<=6){
-            boolean isEarnings=countProbability(40);
+            boolean isEarnings=countProbability(randomNum);
             nowDailyChange = countNowDailyChange(isEarnings);
         }
         if(lastDailyChange>6 && lastDailyChange<=8){
-            boolean isEarnings=countProbability(35);
+            boolean isEarnings=countProbability(randomNum);
             nowDailyChange = countNowDailyChange(isEarnings);
         }
         if(lastDailyChange>8 && lastDailyChange<=10){
-            boolean isEarnings=countProbability(30);
+            boolean isEarnings=countProbability(randomNum);
             nowDailyChange = countNowDailyChange(isEarnings);
         }
         // DailyChange between -2 and -10
         if(lastDailyChange<-2 && lastDailyChange>=-4){
-            boolean isEarnings=countProbability(45);
+            boolean isEarnings=countProbability(randomNum);
             nowDailyChange = countNowDailyChange(isEarnings);
         }
         if(lastDailyChange<-4 && lastDailyChange>=-6){
-            boolean isEarnings=countProbability(40);
+            boolean isEarnings=countProbability(randomNum);
             nowDailyChange = countNowDailyChange(isEarnings);
         }
         if(lastDailyChange<-6 && lastDailyChange>=-8){
-            boolean isEarnings=countProbability(35);
+            boolean isEarnings=countProbability(randomNum);
             nowDailyChange = countNowDailyChange(isEarnings);
         }
         if(lastDailyChange<-8 && lastDailyChange>=-10){
-            boolean isEarnings=countProbability(30);
+            boolean isEarnings=countProbability(randomNum);
             nowDailyChange = countNowDailyChange(isEarnings);
         }
         // 格式化：结果保留两位小数(String) -> 转换成 float 类型

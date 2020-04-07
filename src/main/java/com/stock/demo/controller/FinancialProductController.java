@@ -12,10 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.stock.demo.util.DateOprate;
 
@@ -193,6 +190,59 @@ public class FinancialProductController implements BaseController<FinancialProdu
     }
 
     /**
+     * 查询近几月的净值  参数：productCode & 时间（-1，-3,-6,-12,-36）
+     * @param productCode
+     * @param time
+     * @return
+     */
+    @GetMapping("selectToTrend")
+    public Map<String,Object> selectToTrend(@RequestParam(value = "productCode",required = false) String productCode,
+                                            @RequestParam(value = "time",required = false) int time){
+        Map<String,Object> map = new HashMap<String,Object>(10);
+
+        QueryWrapper<FinancialProduct> queryWrapper=new QueryWrapper<>();
+        queryWrapper.eq("productCode",productCode);
+        /** 根据 productCode 查得 productType */
+        FinancialProduct financialProduct=financialProductService.selectByWrapperReturnBean(queryWrapper);
+
+        // 数组：净值
+        List worthList=new ArrayList();
+
+        if(financialProduct.getProductType().equals("基金")){
+            List<FundEarnings> fundEarningsList=fundEarningsService.selectRecordFromTime(productCode,time);
+            /** 用两个数组来存放数据，一个净值，一个日期，最终将数组合并为 Map */
+
+            for(int i=0;i<fundEarningsList.size();i++){
+                // 将净值提取出来，存进 worthList
+                worthList.add(fundEarningsList.get(i).getNetWorth());
+            }
+            map.put("worthList",worthList);
+            System.out.println(productCode);
+        }else if(financialProduct.getProductType().equals("股票")){
+            List<StockEarnings> stockEarningsList=stockEarningsService.selectRecordFromTime(productCode,time);
+            /** 用两个数组来存放数据，一个净值，一个日期，最终将数组合并为 Map */
+
+            for(int i=0;i<stockEarningsList.size();i++){
+                // 将净值提取出来，存进 worthList
+                worthList.add(stockEarningsList.get(i).getStockMarketValue());
+            }
+            map.put("worthList",worthList);
+            System.out.println(productCode);
+        }else if(financialProduct.getProductType().equals("黄金")){
+            List<GoldEarnings> goldEarningsList=goldEarningsService.selectRecordFromTime(productCode,time);
+            /** 用两个数组来存放数据，一个净值，一个日期，最终将数组合并为 Map */
+
+            for(int i=0;i<goldEarningsList.size();i++){
+                // 将净值提取出来，存进 worthList
+                worthList.add(goldEarningsList.get(i).getGoldPrice());
+            }
+            map.put("worthList",worthList);
+            System.out.println(productCode);
+        }
+        return map;
+    }
+
+    /**
      * 查找项目详情（多对象查询）
      * @param productCode
      * @return map
@@ -200,11 +250,10 @@ public class FinancialProductController implements BaseController<FinancialProdu
     @GetMapping("selectProjectDetail")
     public Map<String,Object> selectDetails(@RequestParam(value = "productCode",required = false) String productCode){
         Map<String,Object> map = new HashMap<String,Object>(10);
-        Object object=new Object();
 
         QueryWrapper<FinancialProduct> queryWrapper=new QueryWrapper<>();
         queryWrapper.eq("productCode",productCode);
-
+        /** 根据 productCode 查得 productType */
         FinancialProduct financialProduct=financialProductService.selectByWrapperReturnBean(queryWrapper);
 
         map.put("financialProduct",financialProduct);

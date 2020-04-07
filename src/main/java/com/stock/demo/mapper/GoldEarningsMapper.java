@@ -6,6 +6,8 @@ import com.stock.demo.pojo.GoldEarnings;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
+import java.util.List;
+
 /**
  * Created with IntelliJ IDEA.
  * User: 刘铄
@@ -22,4 +24,8 @@ public interface GoldEarningsMapper extends BaseMapper<GoldEarnings> {
     /** 查询倒数第二条收益记录 */
     @Select("SELECT * FROM goldEarnings where productCode=#{productCode} order by earningsDate DESC limit 1,1")
     public GoldEarnings selectLastTwoEarnings(String productCode);
+
+    /** 趋势图：查找某段时间的收益记录  time：-1,-3 ... */
+    @Select("select * from goldearnings where productCode=#{productCode} and earningsDate between (SELECT DATE_ADD(now(),INTERVAL #{time} MONTH)) and now()")
+    public List<GoldEarnings> selectRecordFromTime(String productCode, int time);
 }

@@ -73,4 +73,9 @@ public class StockEarningsServiceImpl implements StockEarningsService {
     public StockEarnings selectByWrapperReturnBean(Wrapper<StockEarnings> wrapper) {
         return stockEarningsMapper.selectOne(wrapper);
     }
+
+    @Override
+    public List<StockEarnings> selectRecordFromTime(String productCode, int time) {
+        return stockEarningsMapper.selectRecordFromTime(productCode,time);
+    }
 }

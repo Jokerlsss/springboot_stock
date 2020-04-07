@@ -5,6 +5,8 @@ import com.stock.demo.pojo.FundEarnings;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
+import java.util.List;
+
 /**
  * Created with IntelliJ IDEA.
  * User: 刘铄
@@ -21,4 +23,8 @@ public interface FundEarningsMapper  extends BaseMapper<FundEarnings> {
     /** 查找倒数第二条收益记录 */
     @Select("SELECT * FROM fundearnings where productCode=#{productCode} order by earningsDate DESC limit 1,1")
     public FundEarnings selectLastTwoEarnings(String productCode);
+
+    /** 趋势图：查找某段时间的收益记录  time：-1,-3 ... */
+    @Select("select * from fundearnings where productCode=#{productCode} and earningsDate between (SELECT DATE_ADD(now(),INTERVAL #{time} MONTH)) and now()")
+    public List<FundEarnings> selectRecordFromTime(String productCode, int time);
 }

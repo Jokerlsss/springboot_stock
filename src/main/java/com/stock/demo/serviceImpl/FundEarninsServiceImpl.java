@@ -72,4 +72,9 @@ public class FundEarninsServiceImpl implements FundEarningsService {
     public FundEarnings selectByWrapperReturnBean(Wrapper<FundEarnings> wrapper) {
         return fundEarningsMapper.selectOne(wrapper);
     }
+
+    @Override
+    public List<FundEarnings> selectRecordFromTime(String productCode, int time) {
+        return fundEarningsMapper.selectRecordFromTime(productCode,time);
+    }
 }

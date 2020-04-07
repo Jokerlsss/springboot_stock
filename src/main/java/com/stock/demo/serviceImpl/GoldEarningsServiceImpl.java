@@ -72,4 +72,9 @@ public class GoldEarningsServiceImpl implements GoldEarningsService {
     public GoldEarnings selectByWrapperReturnBean(Wrapper<GoldEarnings> wrapper) {
         return goldEarningsMapper.selectOne(wrapper);
     }
+
+    @Override
+    public List<GoldEarnings> selectRecordFromTime(String productCode, int time) {
+        return goldEarningsMapper.selectRecordFromTime(productCode,time);
+    }
 }
