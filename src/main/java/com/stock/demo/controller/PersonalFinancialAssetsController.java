@@ -77,15 +77,99 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
             map.put("holdEarn",personalFinancialAssetsList.get(i).getHoldEarn());
 
             /** 将 map 存进 ArrayList 中 */
-//            mapBig.put(""+i,map);
-//            System.out.println(map);
             moreInfoList.add(map);
-            // 将 map 置空防止数据重复
         }
-//        list[financialProduct:{...},personalFinancialAssetsList:{},financialProduct:{},{}]
-//        list[{{},{}},{{},{}}]
-//        System.out.println(moreInfoList);
         return moreInfoList;
+    }
+
+    @PostMapping("addPositions")
+    public int addPositions (@RequestBody(required = false) PersonalFinancialAssets bean){
+        /** 查找出已存在的对应的资产记录(userid,productCode,status) */
+        QueryWrapper<PersonalFinancialAssets> wrapper=new QueryWrapper<>();
+        String productCode=bean.getProductCode();
+        Long userid=bean.getUserid();
+
+        wrapper.eq("productCode",productCode);
+        wrapper.eq("userid",userid);
+        // 资产状态  0：持有  1：已卖出
+        wrapper.eq("status",0);
+
+        PersonalFinancialAssets personalFinancialAssets=personalFinancialAssetsService.selectByWrapperReturnBean(wrapper);
+
+        /** 查看产品类型（参数：productCode） */
+        QueryWrapper<FinancialProduct> financialProductQueryWrapper= new QueryWrapper<>();
+        financialProductQueryWrapper.eq("productCode",productCode);
+        FinancialProduct financialProduct=financialProductService.selectByWrapperReturnBean(financialProductQueryWrapper);
+        // 查询类型
+        String productType=financialProduct.getProductType();
+
+        if(productType.equals("股票")){
+            // 查询: 当天该产品净值，即为买入成本      参数：买入时间 & productCode
+            QueryWrapper<StockEarnings> stockWrapper=new QueryWrapper<>();
+
+            // 转换：将日期转换为String类型才可以查询到结果
+            SimpleDateFormat formatter = new SimpleDateFormat( "yyyy-MM-dd ");
+            String dateStirng =  formatter.format(bean.getBuyTime());
+
+            stockWrapper.eq("earnings_date",dateStirng);
+            stockWrapper.eq("productCode",bean.getProductCode());
+            StockEarnings stockEarnings=stockEarningsService.selectByWrapperReturnBean(stockWrapper);
+
+            // holdingUnitPrice：持有单价
+            float holdingUnitPrice=stockEarnings.getStockMarketValue();
+
+            /**
+             * 新购入金额 = 新购入份额 * 对应日期净值
+             * 新份额 = 新购入份额 + 旧份额
+             * 新持有资产 = 新购入金额 + 旧持仓资产
+             * 新持仓成本 = 新购入金额 + 旧持仓成本
+             */
+            float newBuyAssets=bean.getAmountOfAssets()*holdingUnitPrice;
+            float newAmountOfAssets=bean.getAmountOfAssets()+personalFinancialAssets.getAmountOfAssets();
+            float holdAssets=newBuyAssets+personalFinancialAssets.getHoldAssets();
+            float newHoldingCost=newBuyAssets+personalFinancialAssets.getHoldingCost();
+
+            /** 将更新的值赋给该条记录 */
+            personalFinancialAssets.setAmountOfAssets(newAmountOfAssets);
+            personalFinancialAssets.setHoldAssets(holdAssets);
+            personalFinancialAssets.setHoldingCost(newHoldingCost);
+
+            /** 更新数值（bean & 资产ID） */
+            QueryWrapper<PersonalFinancialAssets> personalFinancialAssetsQueryWrapper=new QueryWrapper<>();
+            personalFinancialAssetsQueryWrapper.eq("personalFinancialAssetsID",personalFinancialAssets.getPersonalFinancialAssetsID());
+            return personalFinancialAssetsService.updateByWrapper(personalFinancialAssets,personalFinancialAssetsQueryWrapper);
+        }else if(productType.equals("基金")){
+            return 0;
+        }else if(productType.equals("黄金")){
+            return 0;
+        }else{
+            return 0;
+        }
+
+        /**
+         * 查找出已存在的对应的资产(userid,productCode,status)
+         * 查看类型（参数：productCode）
+         * 股票
+         *     （持有份额）
+         *     查对应日期净值（参数：buyTime）
+         *
+         *     新购入金额 = 新购入份额 * 对应日期净值
+         *
+         *     新份额 = 新购入份额 + 旧份额
+         *     新持有资产 = 新购入金额 + 旧持仓资产
+         *     新持仓成本 = 新购入金额 + 旧持仓成本
+         *
+         * 黄金
+         *     （购入金额）
+         *     新持仓成本 = 新购入金额 + 旧持仓成本
+         *     新持有资产 = 新购入金额 + 旧持仓资产
+         *     新份额 = 新购入金额 / 对应日期净值 + 旧份额
+         * 基金
+         *     （购入金额）
+         *     新持仓成本 = 新购入金额 + 旧持仓成本
+         *     新持有资产 = 新购入金额 + 旧持仓资产
+         *     新份额 = 新购入金额 / 对应日期净值 + 旧份额
+         */
     }
 
     /**
@@ -104,6 +188,24 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
         return personalFinancialAssetsService.deleteByWrapper(queryWrapper);
     }
 
+    /**
+     * 查看是否存在某资产
+     * @param userID
+     * @param productCode
+     * @return
+     */
+    @GetMapping("isExist")
+    public int isExist(@RequestParam(value="userID",required = false) Long userID,
+                       @RequestParam(value="productCode",required = false) String productCode){
+        /** 查询项目是否存在（参数：userid & produtCode） */
+        QueryWrapper<PersonalFinancialAssets> personalFinancialAssetsQueryWrapper=new QueryWrapper<>();
+        personalFinancialAssetsQueryWrapper.eq("userid",userID);
+        personalFinancialAssetsQueryWrapper.eq("productCode",productCode);
+        personalFinancialAssetsQueryWrapper.eq("status",0);
+        int isExist=personalFinancialAssetsService.selectByWrapperReturnInt(personalFinancialAssetsQueryWrapper);
+        /** 返回 isExist 0：不存在  1：存在 */
+        return isExist;
+    }
 
     @Override
     public List<PersonalFinancialAssets> list() {
@@ -125,7 +227,7 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
         personalFinancialAssetsQueryWrapper.eq("status",0);
         int isExist=personalFinancialAssetsService.selectByWrapperReturnInt(personalFinancialAssetsQueryWrapper);
         System.out.println("isExist:"+isExist);
-        /** 判断：某用户的产品代码存在 且 资产状态为持有时，不能新增 */
+        /** 判断：某用户的产品代码存在（isExist：1） 且 资产状态为持有时，不能新增 */
         if(isExist==0){
             // 根据 productCode 查询对应的类型
             QueryWrapper<FinancialProduct> queryWrapper=new QueryWrapper<>();
@@ -242,7 +344,10 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
                 // TODO: 其他类型则返回 0 ，即新增失败
                 return 0;
             }
-        }else{
+        }else if(isExist==1){
+            /** 当个人资产中存在时（isExist：1），返回：2 */
+            return 2;
+        }else {
             return 0;
         }
     }

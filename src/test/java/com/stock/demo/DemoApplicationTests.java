@@ -194,6 +194,8 @@ class DemoApplicationTests {
             }
         }
         // TODO: 添加更新个人资产中今日收益和持有收益的方法
+        updateEarn.updateDayEarn();
+        updateEarn.updateHoldEarn();
     }
 
     /**
