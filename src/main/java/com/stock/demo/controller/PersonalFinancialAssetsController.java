@@ -82,6 +82,11 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
         return moreInfoList;
     }
 
+    /**
+     * 加仓（更新个人资产中的信息： 持有资产 & 持有成本 & 持有份额）
+     * @param bean
+     * @return
+     */
     @PostMapping("addPositions")
     public int addPositions (@RequestBody(required = false) PersonalFinancialAssets bean){
         /** 查找出已存在的对应的资产记录(userid,productCode,status) */
@@ -126,12 +131,16 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
              */
             float newBuyAssets=bean.getAmountOfAssets()*holdingUnitPrice;
             float newAmountOfAssets=bean.getAmountOfAssets()+personalFinancialAssets.getAmountOfAssets();
-            float holdAssets=newBuyAssets+personalFinancialAssets.getHoldAssets();
+            float newHoldAssets=newBuyAssets+personalFinancialAssets.getHoldAssets();
             float newHoldingCost=newBuyAssets+personalFinancialAssets.getHoldingCost();
 
+            System.out.println("newAmountOfAssets"+newAmountOfAssets);
+            System.out.println("holdAssets"+newHoldAssets);
+            System.out.println("newBuyAssets"+newBuyAssets);
+            System.out.println("newHoldingCost"+newHoldingCost);
             /** 将更新的值赋给该条记录 */
             personalFinancialAssets.setAmountOfAssets(newAmountOfAssets);
-            personalFinancialAssets.setHoldAssets(holdAssets);
+            personalFinancialAssets.setHoldAssets(newHoldAssets);
             personalFinancialAssets.setHoldingCost(newHoldingCost);
 
             /** 更新数值（bean & 资产ID） */
@@ -139,37 +148,74 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
             personalFinancialAssetsQueryWrapper.eq("personalFinancialAssetsID",personalFinancialAssets.getPersonalFinancialAssetsID());
             return personalFinancialAssetsService.updateByWrapper(personalFinancialAssets,personalFinancialAssetsQueryWrapper);
         }else if(productType.equals("基金")){
-            return 0;
+            // 查询: 当天该产品净值，即为买入成本      参数：买入时间 & productCode
+            QueryWrapper<FundEarnings> fundEarningsQueryWrapper=new QueryWrapper<>();
+
+            // 转换：将日期转换为String类型才可以查询到结果
+            SimpleDateFormat formatter = new SimpleDateFormat( "yyyy-MM-dd ");
+            String dateStirng =  formatter.format(bean.getBuyTime());
+
+            fundEarningsQueryWrapper.eq("earningsDate",dateStirng);
+            fundEarningsQueryWrapper.eq("productCode",bean.getProductCode());
+            FundEarnings fundEarnings=fundEarningsService.selectByWrapperReturnBean(fundEarningsQueryWrapper);
+
+            // 根据当天净值，作为购入的单价  holdingUnitPrice：持有单价
+            float holdingNetWorth=fundEarnings.getNetWorth();
+
+            /**
+             * （购入金额）
+             * 新持仓成本 = 新购入金额 + 旧持仓成本
+             * 新持有资产 = 新购入金额 + 旧持仓资产
+             * 新份额 = 新购入金额 / 对应日期净值 + 旧份额
+             */
+            float newHoldingCost=bean.getHoldingCost()+personalFinancialAssets.getHoldingCost();
+            float newHoldAssets=bean.getHoldingCost()+personalFinancialAssets.getHoldAssets();
+            float newAmountOfAssets=bean.getHoldingCost()/holdingNetWorth+personalFinancialAssets.getAmountOfAssets();
+
+            // 赋值
+            personalFinancialAssets.setAmountOfAssets(newAmountOfAssets);
+            personalFinancialAssets.setHoldAssets(newHoldAssets);
+            personalFinancialAssets.setHoldingCost(newHoldingCost);
+            /** 更新数值（bean & 资产ID） */
+            QueryWrapper<PersonalFinancialAssets> personalFinancialAssetsQueryWrapper=new QueryWrapper<>();
+            personalFinancialAssetsQueryWrapper.eq("personalFinancialAssetsID",personalFinancialAssets.getPersonalFinancialAssetsID());
+            return personalFinancialAssetsService.updateByWrapper(personalFinancialAssets,personalFinancialAssetsQueryWrapper);
         }else if(productType.equals("黄金")){
-            return 0;
+            // 查询: 当天该产品净值，即为买入成本      参数：买入时间 & productCode
+            QueryWrapper<GoldEarnings> goldEarningsQueryWrapper=new QueryWrapper<>();
+
+            // 转换：将日期转换为String类型才可以查询到结果
+            SimpleDateFormat formatter = new SimpleDateFormat( "yyyy-MM-dd ");
+            String dateStirng =  formatter.format(bean.getBuyTime());
+
+            goldEarningsQueryWrapper.eq("earningsDate",dateStirng);
+            goldEarningsQueryWrapper.eq("productCode",bean.getProductCode());
+            GoldEarnings goldEarnings=goldEarningsService.selectByWrapperReturnBean(goldEarningsQueryWrapper);
+
+            // 根据当天净值，作为购入的单价  holdingUnitPrice：持有单价
+            float holdingNetWorth=goldEarnings.getGoldPrice();
+
+            /**
+             * （购入金额）
+             * 新持仓成本 = 新购入金额 + 旧持仓成本
+             * 新持有资产 = 新购入金额 + 旧持仓资产
+             * 新份额 = 新购入金额 / 对应日期净值 + 旧份额
+             */
+            float newHoldingCost=bean.getHoldingCost()+personalFinancialAssets.getHoldingCost();
+            float newHoldAssets=bean.getHoldingCost()+personalFinancialAssets.getHoldAssets();
+            float newAmountOfAssets=bean.getHoldingCost()/holdingNetWorth+personalFinancialAssets.getAmountOfAssets();
+
+            // 赋值
+            personalFinancialAssets.setAmountOfAssets(newAmountOfAssets);
+            personalFinancialAssets.setHoldAssets(newHoldAssets);
+            personalFinancialAssets.setHoldingCost(newHoldingCost);
+            /** 更新数值（bean & 资产ID） */
+            QueryWrapper<PersonalFinancialAssets> personalFinancialAssetsQueryWrapper=new QueryWrapper<>();
+            personalFinancialAssetsQueryWrapper.eq("personalFinancialAssetsID",personalFinancialAssets.getPersonalFinancialAssetsID());
+            return personalFinancialAssetsService.updateByWrapper(personalFinancialAssets,personalFinancialAssetsQueryWrapper);
         }else{
             return 0;
         }
-
-        /**
-         * 查找出已存在的对应的资产(userid,productCode,status)
-         * 查看类型（参数：productCode）
-         * 股票
-         *     （持有份额）
-         *     查对应日期净值（参数：buyTime）
-         *
-         *     新购入金额 = 新购入份额 * 对应日期净值
-         *
-         *     新份额 = 新购入份额 + 旧份额
-         *     新持有资产 = 新购入金额 + 旧持仓资产
-         *     新持仓成本 = 新购入金额 + 旧持仓成本
-         *
-         * 黄金
-         *     （购入金额）
-         *     新持仓成本 = 新购入金额 + 旧持仓成本
-         *     新持有资产 = 新购入金额 + 旧持仓资产
-         *     新份额 = 新购入金额 / 对应日期净值 + 旧份额
-         * 基金
-         *     （购入金额）
-         *     新持仓成本 = 新购入金额 + 旧持仓成本
-         *     新持有资产 = 新购入金额 + 旧持仓资产
-         *     新份额 = 新购入金额 / 对应日期净值 + 旧份额
-         */
     }
 
     /**
