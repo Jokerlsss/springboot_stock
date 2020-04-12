@@ -17,6 +17,6 @@ import java.util.List;
  */
 @Mapper
 public interface PersonalFinancialAssetsVOMapper extends BaseMapper<PersonalFinancialAssetsVO> {
-@Select("select a.productCode,a.productName,a.productType,b.holdEarn,b.holdingCost,b.dayEarn,b.holdAssets from financialproduct a,personalfinancialassets b where b.userid=#{userid} and a.productCode=b.productCode")
+@Select("select a.productCode,a.productName,a.productType,b.holdEarn,b.holdingCost,b.dayEarn,b.holdAssets from financialproduct a,personalfinancialassets b where b.userid=#{userid} and b.status=0 and a.productCode=b.productCode")
     public List<PersonalFinancialAssetsVO> selectByWrapper(String userid);
 }

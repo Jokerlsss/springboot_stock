@@ -194,8 +194,8 @@ class DemoApplicationTests {
             }
         }
         // TODO: 添加更新个人资产中今日收益和持有收益的方法
-        updateEarn.updateDayEarn();
-        updateEarn.updateHoldEarn();
+        updateEarn.updateDayEarn(null);
+        updateEarn.updateHoldEarn(null);
     }
 
     /**
@@ -203,8 +203,8 @@ class DemoApplicationTests {
      */
     @Test
     public void updateDayEarn(){
-        updateEarn.updateDayEarn();
-        updateEarn.updateHoldEarn();
+        updateEarn.updateDayEarn(null);
+        updateEarn.updateHoldEarn(null);
     }
 
     /**

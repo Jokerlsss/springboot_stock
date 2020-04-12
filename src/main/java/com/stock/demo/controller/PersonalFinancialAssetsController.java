@@ -5,9 +5,11 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.stock.demo.pojo.*;
 import com.stock.demo.service.*;
+import com.stock.demo.util.PersonalAssetsUtil;
 import com.stock.demo.util.UpdateEarn;
 import org.springframework.beans.AbstractNestablePropertyAccessor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 
 import javax.jnlp.PersistenceService;
@@ -45,8 +47,125 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
     @Autowired
     UpdateEarn updateEarn;
 
+    @Autowired
+    PersonalAssetsUtil personalAssetsUtil;
+
+    // TODO: 限制用户不能在周末操作
+
+    // TODO：！修改持仓成本为 单价，当要使用持仓成本时，用 单价 * 份额即可
+    /**
+     * 卖出产品份额
+     * 在卖出更新了份额 & 赎回资产后，需要同步更新 今日收益、
+     * @param bean
+     * @return
+     */
+    @PostMapping("sellPro")
+    public int sellPro(@RequestBody(required = false) PersonalFinancialAssets bean){
+        // 是否卖出成功标志
+        int flag = 0;
+        /** 读取资产份额 */
+        QueryWrapper<PersonalFinancialAssets> personalFinancialAssetsQueryWrapper=new QueryWrapper<>();
+        personalFinancialAssetsQueryWrapper.eq("userid",bean.getUserid());
+        personalFinancialAssetsQueryWrapper.eq("productCode",bean.getProductCode());
+        personalFinancialAssetsQueryWrapper.eq("status",0);
+        PersonalFinancialAssets personalFinancialAssets=personalFinancialAssetsService.selectByWrapperReturnBean(personalFinancialAssetsQueryWrapper);
+        // 读取资产份额
+        float amountOfAssets=personalFinancialAssets.getAmountOfAssets();
+
+        /** 判断 资产份额 是否与bean中资产份额一致，若是：全仓卖出（修改资产状态） & 更新 持有资产、赎回资产、持有收益、累计收益 */
+        if(amountOfAssets==bean.getAmountOfAssets()){
+            /** 累计收益 = 当前拥有资产 + 赎回资产 - 投入成本 */
+            Long personalFinancialAssetsID=personalFinancialAssets.getPersonalFinancialAssetsID();
+
+            /** 新赎回资产 = 旧赎回资产 + 赎回份额 * 赎回时净值 */
+            float redemptionOfAssets=personalFinancialAssets.getRedemptionOfAssets();
+
+            /** 查看产品类型（参数：productCode） */
+            QueryWrapper<FinancialProduct> financialProductQueryWrapper= new QueryWrapper<>();
+            financialProductQueryWrapper.eq("productCode",bean.getProductCode());
+            FinancialProduct financialProduct=financialProductService.selectByWrapperReturnBean(financialProductQueryWrapper);
+
+            // 工具类参数
+            String productType=financialProduct.getProductType();
+            String productCode=financialProduct.getProductCode();
+            Date sellTime=bean.getBuyTime();
+            /** 工具类：获取对应日期净值 */
+            float worth=personalAssetsUtil.getDateOfValue(productCode,productType,sellTime);
+
+            /** 持有资产清零 & 更新赎回资产 */
+            // 获得新的赎回资产（参数：旧赎回资产 & 持有份额 & 净值）
+            System.out.println("redemptionOfAssets"+redemptionOfAssets);
+            System.out.println("worth"+worth);
+            System.out.println("amountOfAssets"+amountOfAssets);
+            float newRedemption=updateEarn.updateRedemptionOfAssets(redemptionOfAssets,amountOfAssets,worth);
+            System.out.println("新赎回资产 = "+redemptionOfAssets+" + "+amountOfAssets+" * "+worth+"="+newRedemption);
+            // 持有资产清零：0
+            personalFinancialAssets.setHoldAssets(0);
+            personalFinancialAssets.setRedemptionOfAssets(newRedemption);
+            /**新份额 = 旧份额 - 卖出份额 */
+            // 份额清零
+            float newAmountOfAssets=personalFinancialAssets.getAmountOfAssets()-bean.getAmountOfAssets();
+            personalFinancialAssets.setAmountOfAssets(newAmountOfAssets);
+            // 将状态更改为：1（已卖出）
+            personalFinancialAssets.setStatus(1);
+
+            /** 更新：资产状态 */
+            QueryWrapper<PersonalFinancialAssets> wrapper=new QueryWrapper<>();
+            wrapper.eq("personalFinancialAssetsID",personalFinancialAssetsID);
+            flag=personalFinancialAssetsService.updateByWrapper(personalFinancialAssets,wrapper);
+
+            /** 在份额、赎回资产更新后，对以下参数进行更新 */
+            /** 更新累计收益、持有收益、持有资产（参数：personalFinancialAssetsID） */
+            // TODO 日收益、持有收益不清零
+            System.out.println("这一步进来了没");
+            updateEarn.updateHoldEarn(personalFinancialAssetsID);
+            updateEarn.updateHoldEarn(personalFinancialAssetsID);
+            /** 更新今日收益 */
+            updateEarn.updateDayEarn(personalFinancialAssetsID);
+        }else{
+            /** 非全仓卖出，则更新赎回资产、持有收益、日收益、累计收益、份额、持有资产 */
+            return 0;
+        }
+        /**
+         * service 读取资产份额
+         * 判断资产份额是否与bean中资产份额一致
+         * if（是）
+         *     则修改资产状态为1（卖出）
+         * else
+         *     TODO：卖出日期应为当天（不然会发生：1号和3号买入，2号卖出全仓，这时候该资产应该已经不存在了）
+         *     读取卖出日期的当天净值
+         *     新持有份额 = 旧份额 - 卖出份额
+         *     新持仓资产 = 旧持仓资产 - 卖出份额 * 当天净值
+         *     旧单价 = 旧持仓成本 / 旧持有份额
+         *     新持仓成本 = 旧单价 * 新持有份额
+         *
+         *     新持仓收益 =
+         *
+         */
+        return flag;
+    }
+
+    /**
+     * 查找单个对应资产
+     * @param userid
+     * @param productCode
+     * @return
+     */
+    @GetMapping("selectOne")
+    public PersonalFinancialAssets selectOne(@RequestParam(value="userid",required = false) Long userid,
+                                             @RequestParam(value="productCode",required = false) Long productCode){
+        /** 查找资产（代码 & 用户ID & 状态：0【持有】） */
+        QueryWrapper<PersonalFinancialAssets> personalFinancialAssetsQueryWrapper=new QueryWrapper<>();
+        personalFinancialAssetsQueryWrapper.eq("productCode",productCode);
+        personalFinancialAssetsQueryWrapper.eq("userid",userid);
+        personalFinancialAssetsQueryWrapper.eq("status",0);
+
+        return personalFinancialAssetsService.selectByWrapperReturnBean(personalFinancialAssetsQueryWrapper);
+    }
+
     /**
      * 查询用户持有资产
+     * status：0 持有  1：卖出
      * @param userID
      * @return List<PersonalFinancialAssets>
      */
@@ -82,6 +201,7 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
         return moreInfoList;
     }
 
+    // TODO 加仓后更新日收益、累计收益、持有收益
     /**
      * 加仓（更新个人资产中的信息： 持有资产 & 持有成本 & 持有份额）
      * @param bean
@@ -258,6 +378,7 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
         return null;
     }
 
+    // TODO 添加产品后更新 日收益、持有收益、持有资产、累计收益
     /**
      * 添加个人产品
      * @param bean
@@ -271,6 +392,10 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
         personalFinancialAssetsQueryWrapper.eq("userid",bean.getUserid());
         personalFinancialAssetsQueryWrapper.eq("productCode",bean.getProductCode());
         personalFinancialAssetsQueryWrapper.eq("status",0);
+        // 获取资产ID供更新收益
+        PersonalFinancialAssets personalFinancialAssets=new PersonalFinancialAssets();
+        Long financialID=personalFinancialAssets.getPersonalFinancialAssetsID();
+        // 方法：判断产品是否存在
         int isExist=personalFinancialAssetsService.selectByWrapperReturnInt(personalFinancialAssetsQueryWrapper);
         System.out.println("isExist:"+isExist);
         /** 判断：某用户的产品代码存在（isExist：1） 且 资产状态为持有时，不能新增 */
@@ -315,8 +440,8 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
 
                 int insertFlag=personalFinancialAssetsService.insert(bean);
                 /** 调用工具类更新个人资产的今日收益和持有收益 */
-                updateEarn.updateDayEarn();
-                updateEarn.updateHoldEarn();
+                updateEarn.updateDayEarn(financialID);
+                updateEarn.updateHoldEarn(financialID);
                 return insertFlag;
             }else if(productType.equals("基金")){
                 // 获取持仓成本（即买入金额）
@@ -349,8 +474,8 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
 
                 int insertFlag=personalFinancialAssetsService.insert(bean);
                 /** 调用工具类更新个人资产的今日收益和持有收益 */
-                updateEarn.updateDayEarn();
-                updateEarn.updateHoldEarn();
+                updateEarn.updateDayEarn(financialID);
+                updateEarn.updateHoldEarn(financialID);
                 return insertFlag;
             }else if(productType.equals("黄金")){
                 // 获取持仓成本（即买入金额）
@@ -383,8 +508,8 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
 
                 int insertFlag=personalFinancialAssetsService.insert(bean);
                 /** 调用工具类更新个人资产的今日收益和持有收益 */
-                updateEarn.updateDayEarn();
-                updateEarn.updateHoldEarn();
+                updateEarn.updateDayEarn(financialID);
+                updateEarn.updateHoldEarn(financialID);
                 return insertFlag;
             }else {
                 // TODO: 其他类型则返回 0 ，即新增失败
@@ -394,6 +519,7 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
             /** 当个人资产中存在时（isExist：1），返回：2 */
             return 2;
         }else {
+            /** 其他错误，返回：0 */
             return 0;
         }
     }

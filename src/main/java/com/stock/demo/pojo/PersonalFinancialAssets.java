@@ -59,7 +59,7 @@ public class PersonalFinancialAssets {
 
     /* 资产状态 */
     @TableField(value = "status")
-    private Long status;
+    private int status;
 
     @TableField(value = "productName")
     private String productName;
@@ -72,10 +72,17 @@ public class PersonalFinancialAssets {
     @TableField(value = "holdEarn")
     private float holdEarn;
 
+    // 持有资产
     @TableField(value = "holdAssets")
     private float holdAssets;
 
+    // 赎回资产
+    @TableField(value = "redemptionOfAssets")
+    private float redemptionOfAssets;
 
+    // 累计收益
+    @TableField(value = "totalEarn")
+    private float totalEarn;
 
 //    // 理财产品表
 //    @Transient
