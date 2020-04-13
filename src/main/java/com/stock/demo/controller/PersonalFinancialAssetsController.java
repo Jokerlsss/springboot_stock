@@ -61,26 +61,29 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
      */
     @PostMapping("sellPro")
     public int sellPro(@RequestBody(required = false) PersonalFinancialAssets bean){
+        DecimalFormat dfTwo =new DecimalFormat("#.00");
+        DecimalFormat dfFour =new DecimalFormat("#.0000");
         // 是否卖出成功标志
         int flag = 0;
-        /** 读取资产份额 */
+        /** 读取旧资产份额 */
         QueryWrapper<PersonalFinancialAssets> personalFinancialAssetsQueryWrapper=new QueryWrapper<>();
         personalFinancialAssetsQueryWrapper.eq("userid",bean.getUserid());
         personalFinancialAssetsQueryWrapper.eq("productCode",bean.getProductCode());
         personalFinancialAssetsQueryWrapper.eq("status",0);
         PersonalFinancialAssets personalFinancialAssets=personalFinancialAssetsService.selectByWrapperReturnBean(personalFinancialAssetsQueryWrapper);
-        // 读取资产份额
+        // 读取旧资产份额
         float amountOfAssets=personalFinancialAssets.getAmountOfAssets();
 
         /** 判断 资产份额 是否与bean中资产份额一致，若是：全仓卖出（修改资产状态） & 更新 持有资产、赎回资产、持有收益、累计收益 */
+        /** 累计收益 = 当前拥有资产 + 赎回资产 - 投入成本 */
         if(amountOfAssets==bean.getAmountOfAssets()){
-            /** 累计收益 = 当前拥有资产 + 赎回资产 - 投入成本 */
             Long personalFinancialAssetsID=personalFinancialAssets.getPersonalFinancialAssetsID();
 
             /** 新赎回资产 = 旧赎回资产 + 赎回份额 * 赎回时净值 */
+            // get：旧赎回资产
             float redemptionOfAssets=personalFinancialAssets.getRedemptionOfAssets();
 
-            /** 查看产品类型（参数：productCode） */
+            /** select：产品 bean（参数：productCode） */
             QueryWrapper<FinancialProduct> financialProductQueryWrapper= new QueryWrapper<>();
             financialProductQueryWrapper.eq("productCode",bean.getProductCode());
             FinancialProduct financialProduct=financialProductService.selectByWrapperReturnBean(financialProductQueryWrapper);
@@ -93,13 +96,11 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
             float worth=personalAssetsUtil.getDateOfValue(productCode,productType,sellTime);
 
             /** 持有资产清零 & 更新赎回资产 */
-            // 获得新的赎回资产（参数：旧赎回资产 & 持有份额 & 净值）
-            System.out.println("redemptionOfAssets"+redemptionOfAssets);
-            System.out.println("worth"+worth);
-            System.out.println("amountOfAssets"+amountOfAssets);
-            float newRedemption=updateEarn.updateRedemptionOfAssets(redemptionOfAssets,amountOfAssets,worth);
-            System.out.println("新赎回资产 = "+redemptionOfAssets+" + "+amountOfAssets+" * "+worth+"="+newRedemption);
-            // 持有资产清零：0
+            // get：赎回份额
+            float redemptionAmount=bean.getAmountOfAssets();
+            // 获得新的赎回资产（参数：旧赎回资产 & 赎回份额 & 净值）
+            float newRedemption=updateEarn.updateRedemptionOfAssets(redemptionOfAssets,redemptionAmount,worth);
+            // 全仓卖出，持有资产清零：0
             personalFinancialAssets.setHoldAssets(0);
             personalFinancialAssets.setRedemptionOfAssets(newRedemption);
             /**新份额 = 旧份额 - 卖出份额 */
@@ -116,15 +117,63 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
 
             /** 在份额、赎回资产更新后，对以下参数进行更新 */
             /** 更新累计收益、持有收益、持有资产（参数：personalFinancialAssetsID） */
-            // TODO 日收益、持有收益不清零
-            System.out.println("这一步进来了没");
             updateEarn.updateHoldEarn(personalFinancialAssetsID);
-            updateEarn.updateHoldEarn(personalFinancialAssetsID);
+
             /** 更新今日收益 */
             updateEarn.updateDayEarn(personalFinancialAssetsID);
+        }else if(amountOfAssets<bean.getAmountOfAssets()){
+            /** 卖出份额超出限制，错误码：401 */
+            flag=401;
+            return flag;
         }else{
+            Long personalFinancialAssetsID=personalFinancialAssets.getPersonalFinancialAssetsID();
             /** 非全仓卖出，则更新赎回资产、持有收益、日收益、累计收益、份额、持有资产 */
-            return 0;
+
+            // get：旧赎回资产
+            float redemptionOfAssets=personalFinancialAssets.getRedemptionOfAssets();
+
+            /** select：产品 bean（参数：productCode） */
+            QueryWrapper<FinancialProduct> financialProductQueryWrapper= new QueryWrapper<>();
+            financialProductQueryWrapper.eq("productCode",bean.getProductCode());
+            FinancialProduct financialProduct=financialProductService.selectByWrapperReturnBean(financialProductQueryWrapper);
+
+            // 工具类参数
+            String productType=financialProduct.getProductType();
+            String productCode=financialProduct.getProductCode();
+            Date sellTime=bean.getBuyTime();
+            /** 工具类：获取对应日期净值 */
+            float worth=personalAssetsUtil.getDateOfValue(productCode,productType,sellTime);
+
+            /** 获得新的赎回资产（参数：旧赎回资产 & 赎回份额 & 赎回时净值） */
+            // get：赎回份额
+            float redemptionAmount=bean.getAmountOfAssets();
+            float newRedemption=updateEarn.updateRedemptionOfAssets(redemptionOfAssets,redemptionAmount,worth);
+
+            /**新份额 = 旧份额 - 卖出份额 */
+            float newAmountOfAssets=personalFinancialAssets.getAmountOfAssets()-bean.getAmountOfAssets();
+
+            /** 旧单价 = 旧持仓成本 / 旧持有份额 */
+            float oldUnitPrice=personalFinancialAssets.getHoldingCost()/personalFinancialAssets.getAmountOfAssets();
+
+            /** 新持仓成本 = 旧单价 * 新持有份额 */
+            float newHoldingCost=Float.parseFloat(dfTwo.format(oldUnitPrice*newAmountOfAssets));
+
+            personalFinancialAssets.setRedemptionOfAssets(newRedemption);
+            personalFinancialAssets.setAmountOfAssets(newAmountOfAssets);
+            personalFinancialAssets.setHoldingCost(newHoldingCost);
+
+            /** 更新：资产状态 */
+            QueryWrapper<PersonalFinancialAssets> wrapper=new QueryWrapper<>();
+            wrapper.eq("personalFinancialAssetsID",personalFinancialAssetsID);
+            flag=personalFinancialAssetsService.updateByWrapper(personalFinancialAssets,wrapper);
+
+            /** 在份额、赎回资产更新后，对以下参数进行更新 */
+            /** 更新累计收益、持有收益、持有资产（参数：personalFinancialAssetsID） */
+            updateEarn.updateHoldEarn(personalFinancialAssetsID);
+
+            /** 更新今日收益 */
+            updateEarn.updateDayEarn(personalFinancialAssetsID);
+            return flag;
         }
         /**
          * service 读取资产份额
@@ -139,7 +188,7 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
          *     旧单价 = 旧持仓成本 / 旧持有份额
          *     新持仓成本 = 旧单价 * 新持有份额
          *
-         *     新持仓收益 =
+         *     更新新持仓收益
          *
          */
         return flag;
