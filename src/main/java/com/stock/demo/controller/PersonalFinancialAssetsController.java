@@ -3,6 +3,8 @@ package com.stock.demo.controller;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.stock.demo.mapper.PersonalCollectionMapper;
+import com.stock.demo.mapper.PersonalFinancialAssetsMapper;
 import com.stock.demo.pojo.*;
 import com.stock.demo.service.*;
 import com.stock.demo.util.PersonalAssetsUtil;
@@ -30,6 +32,9 @@ import java.util.*;
 public class PersonalFinancialAssetsController implements BaseController<PersonalFinancialAssets>{
 
     @Autowired
+    PersonalFinancialAssetsMapper personalFinancialAssetsMapper;
+
+    @Autowired
     PersonalFinancialAssetsService personalFinancialAssetsService;
 
     @Autowired
@@ -49,6 +54,16 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
 
     @Autowired
     PersonalAssetsUtil personalAssetsUtil;
+
+    /**
+     * 获取累计收益
+     * @param userid
+     * @return
+     */
+    @GetMapping("getTotalEarn")
+    public float getTotalEarn(@RequestParam(value="userid",required = false) Long userid){
+        return personalFinancialAssetsMapper.selectTotalEarn(userid);
+    }
 
     // TODO: 限制用户不能在周末操作
 

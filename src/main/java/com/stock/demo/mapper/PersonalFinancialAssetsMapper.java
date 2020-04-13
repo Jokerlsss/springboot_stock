@@ -20,4 +20,10 @@ public interface PersonalFinancialAssetsMapper extends BaseMapper<PersonalFinanc
 //    TODO:修改查询方式
     @Select("select a.*,b.productName,b.productType from personalfinancialassets a,financialProduct b WHERE a.userID=#{userID} and a.status=0 and a.productCode=b.productCode")
     public List<PersonalFinancialAssets> selectUserHoldProduct(Long userID);
+
+    /**
+     * 查询某个人的累计收益
+     */
+    @Select("select SUM(totalEarn)from personalfinancialassets where userid=#{userid}")
+    public float selectTotalEarn(Long userid);
 }
