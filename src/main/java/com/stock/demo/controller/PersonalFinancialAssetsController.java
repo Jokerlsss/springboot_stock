@@ -56,6 +56,77 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
     PersonalAssetsUtil personalAssetsUtil;
 
     /**
+     * 资产占比（查询个人拥有各资产总和）
+     * @param userid
+     * @return
+     */
+    @GetMapping("getSumOfAssets")
+    public List getSumOfAssets(@RequestParam(value="userid",required = false) Long userid){
+        DecimalFormat dfOne =new DecimalFormat("#.0");
+
+        float stockAssets=personalFinancialAssetsMapper.selectTypeOfAssets(userid,"股票");
+        float fundAssets=personalFinancialAssetsMapper.selectTypeOfAssets(userid,"基金");
+        float goldAssets=personalFinancialAssetsMapper.selectTypeOfAssets(userid,"黄金");
+        float regular=personalFinancialAssetsMapper.selectTypeOfAssets(userid,"定期");
+        float otherAssets=personalFinancialAssetsMapper.selectTypeOfAssets(userid,"其他");
+        /** 查询总资产 */
+        float sumOfAssets=personalFinancialAssetsMapper.selectSumOfAssets(userid);
+
+        List assetsList=new ArrayList();
+        // productQuantity：5种产品
+        int productQuantity=5;
+
+        for(int i=0;i<productQuantity;i++){
+            Map<String,Object> map = new HashMap<String,Object>(10);
+            /**
+             * 返回格式
+             projectItem: '股票',
+             assetItem: '51324',
+             progressItem: '51%',（保留一位小数，转换为 String，增加百分号 %）
+             proportionItem: '51%'（保留一位小数）
+             */
+            if(i==0){
+                /** 股票资产 */
+                String proportionItem=dfOne.format(stockAssets/sumOfAssets*100)+"%";
+                map.put("projectItem","股票");
+                map.put("assetItem",stockAssets);
+                map.put("progressItem",proportionItem);
+                map.put("proportionItem",proportionItem);
+            }else if(i==1){
+                /** 基金资产 */
+                String proportionItem=dfOne.format(fundAssets/sumOfAssets*100)+"%";
+                map.put("projectItem","基金");
+                map.put("assetItem",fundAssets);
+                map.put("progressItem",proportionItem);
+                map.put("proportionItem",proportionItem);
+            }else if(i==2){
+                /** 黄金资产 */
+                String proportionItem=dfOne.format(goldAssets/sumOfAssets*100)+"%";
+                map.put("projectItem","黄金");
+                map.put("assetItem",goldAssets);
+                map.put("progressItem",proportionItem);
+                map.put("proportionItem",proportionItem);
+            }else if(i==3){
+                /** 定期资产 */
+                String proportionItem=dfOne.format(regular/sumOfAssets*100)+"%";
+                map.put("projectItem","定期");
+                map.put("assetItem",regular);
+                map.put("progressItem",proportionItem);
+                map.put("proportionItem",proportionItem);
+            }else if(i==4){
+                /** 其他资产 */
+                String proportionItem=dfOne.format(otherAssets/sumOfAssets*100)+"%";
+                map.put("projectItem","其他");
+                map.put("assetItem",otherAssets);
+                map.put("progressItem",proportionItem);
+                map.put("proportionItem",proportionItem);
+            }
+            assetsList.add(map);
+        }
+        return assetsList;
+    }
+
+    /**
      * 获取累计收益
      * @param userid
      * @return

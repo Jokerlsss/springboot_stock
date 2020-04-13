@@ -84,6 +84,10 @@ public class PersonalFinancialAssets {
     @TableField(value = "totalEarn")
     private float totalEarn;
 
+    // 产品类型
+    @TableField(value = "productType")
+    private String productType;
+
 //    // 理财产品表
 //    @Transient
 //    private String productName;
