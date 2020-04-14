@@ -1,7 +1,10 @@
 package com.stock.demo.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.stock.demo.pojo.HistoricalOperation;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -12,4 +15,10 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public interface HistoricalOperationService extends BaseService<HistoricalOperation>{
+    /**
+     * get：操作记录
+     * @param userid
+     * @return List<bean>
+     */
+    public List<HistoricalOperation> selectByWrapperReturnList(QueryWrapper<HistoricalOperation> wrapper);
 }

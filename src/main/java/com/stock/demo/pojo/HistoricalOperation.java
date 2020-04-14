@@ -24,19 +24,33 @@ public class HistoricalOperation {
     private Long personalFinancialAssetsID;
 
     // 用户ID
-    @TableId(value = "userID")
-    private Long userID;
+    @TableId(value = "userid")
+    private Long userid;
 
     // 操作时间
-    @TableId(value = "operatingTime")
-    private Date operatingTime;
+    @TableId(value = "operatingdate")
+    private Date operatingdate;
 
     // 产品代码
     @TableField("productCode")
     private String productCode;
 
-    // 操作名称
+    // 操作名称：买入、卖出、加仓
     @TableField("operationName")
     private String operationName;
+
+    // 产品名称
+    @TableField("productName")
+    private String productName;
+
+    // 操作金额
+    @TableField("oprateAmount")
+    private float oprateAmount;
+
+    // 剩余持有资产
+    @TableField("holdAssets")
+    private float holdAssets;
+
+
 
 }

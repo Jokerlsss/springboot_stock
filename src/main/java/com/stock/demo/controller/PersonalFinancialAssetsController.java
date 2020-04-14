@@ -50,10 +50,39 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
     GoldEarningsService goldEarningsService;
 
     @Autowired
+    HistoricalOperationService historicalOperationService;
+
+    @Autowired
     UpdateEarn updateEarn;
 
     @Autowired
     PersonalAssetsUtil personalAssetsUtil;
+
+    @GetMapping("getAceOfAssets")
+    public List getAceOfAssets(@RequestParam(value="userid",required = false) Long userid){
+        /** 分别存放累计收益 & 持有收益 */
+        Map<String,Object> totalEarnMap = new HashMap<String,Object>(10);
+        Map<String,Object> holdEarnMap = new HashMap<String,Object>(10);
+        /** get：累计收益最高的名称 & 收益 */
+        List<PersonalFinancialAssets> maxTotalEarnList=personalFinancialAssetsMapper.selectMaxTotalEarn(userid);
+        totalEarnMap.put("productCode",maxTotalEarnList.get(0).getProductCode());
+        totalEarnMap.put("totalEarn",maxTotalEarnList.get(0).getTotalEarn());
+        totalEarnMap.put("productName",maxTotalEarnList.get(0).getProductName());
+
+        /** get：持有收益最高的名称 & 收益 */
+        List<PersonalFinancialAssets> maxHoldEarnList=personalFinancialAssetsMapper.selectMaxHoldEarn(userid);
+        holdEarnMap.put("productCode",maxHoldEarnList.get(0).getProductCode());
+        holdEarnMap.put("holdEarn",maxHoldEarnList.get(0).getHoldEarn());
+        holdEarnMap.put("productName",maxHoldEarnList.get(0).getProductName());
+
+        /** 王牌资产（含 累计收益 Max & 持有收益 Max） */
+        List aceOfAssets=new ArrayList();
+        aceOfAssets.add(totalEarnMap);
+        aceOfAssets.add(holdEarnMap);
+        System.out.println("aceOfAssets:"+aceOfAssets);
+
+        return aceOfAssets;
+    }
 
     /**
      * 资产占比（查询个人拥有各资产总和）
@@ -146,7 +175,7 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
      * @return
      */
     @PostMapping("sellPro")
-    public int sellPro(@RequestBody(required = false) PersonalFinancialAssets bean){
+    public int sellPro(@RequestBody(required = false) PersonalFinancialAssets bean) throws ParseException {
         DecimalFormat dfTwo =new DecimalFormat("#.00");
         DecimalFormat dfFour =new DecimalFormat("#.0000");
         // 是否卖出成功标志
@@ -201,12 +230,48 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
             wrapper.eq("personalFinancialAssetsID",personalFinancialAssetsID);
             flag=personalFinancialAssetsService.updateByWrapper(personalFinancialAssets,wrapper);
 
-            /** 在份额、赎回资产更新后，对以下参数进行更新 */
-            /** 更新累计收益、持有收益、持有资产（参数：personalFinancialAssetsID） */
-            updateEarn.updateHoldEarn(personalFinancialAssetsID);
+            try {
+                /** 在份额、赎回资产更新后，对以下参数进行更新 */
+                /** 更新累计收益、持有收益、持有资产（参数：personalFinancialAssetsID） */
+                updateEarn.updateHoldEarn(personalFinancialAssetsID);
 
-            /** 更新今日收益 */
-            updateEarn.updateDayEarn(personalFinancialAssetsID);
+                /** 更新今日收益 */
+                updateEarn.updateDayEarn(personalFinancialAssetsID);
+
+                /********************** 新增操作记录 *********************/
+                // 获取当前时间
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//可以方便地修改日期格式
+                Date oprateTime=dateFormat.parse(dateFormat.format(new Date()));
+
+                //获取剩余持有资产
+                float holdAssets=personalFinancialAssetsService.selectByWrapperReturnBean(wrapper).getHoldAssets();
+
+                // 将参数保存进 HistoricalOperation 实体类中
+                HistoricalOperation historicalOperation=new HistoricalOperation();
+
+                /**
+                 * 个人资产ID: personalFinancialAssetsID
+                 * 资产ID: productCode
+                 * 用户ID: bean.getUserid()
+                 * 操作时间：new DateTime()
+                 * 操作名称：卖出
+                 * 资产名称：bean.getProductName()
+                 * 操作金额：newRedemption（赎回资产）
+                 * 剩余持有资产：personalFinancialAssetsService.selectByWrapperReturnBean(wrapper).getHoldAssets();
+                 */
+                historicalOperation.setPersonalFinancialAssetsID(personalFinancialAssetsID);
+                historicalOperation.setProductCode(productCode);
+                historicalOperation.setUserid(bean.getUserid());
+                historicalOperation.setOperatingdate(oprateTime);
+                historicalOperation.setOperationName("卖出");
+                historicalOperation.setProductName(bean.getProductName());
+                historicalOperation.setOprateAmount(newRedemption);
+                historicalOperation.setHoldAssets(holdAssets);
+                // 添加记录
+                historicalOperationService.insert(historicalOperation);
+            }catch (Exception e){
+                throw e;
+            }
         }else if(amountOfAssets<bean.getAmountOfAssets()){
             /** 卖出份额超出限制，错误码：401 */
             flag=401;
@@ -248,18 +313,55 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
             personalFinancialAssets.setAmountOfAssets(newAmountOfAssets);
             personalFinancialAssets.setHoldingCost(newHoldingCost);
 
-            /** 更新：资产状态 */
-            QueryWrapper<PersonalFinancialAssets> wrapper=new QueryWrapper<>();
-            wrapper.eq("personalFinancialAssetsID",personalFinancialAssetsID);
-            flag=personalFinancialAssetsService.updateByWrapper(personalFinancialAssets,wrapper);
-
             /** 在份额、赎回资产更新后，对以下参数进行更新 */
             /** 更新累计收益、持有收益、持有资产（参数：personalFinancialAssetsID） */
-            updateEarn.updateHoldEarn(personalFinancialAssetsID);
+            try {
 
-            /** 更新今日收益 */
-            updateEarn.updateDayEarn(personalFinancialAssetsID);
-            return flag;
+                /** 更新：资产状态 */
+                QueryWrapper<PersonalFinancialAssets> wrapper=new QueryWrapper<>();
+                wrapper.eq("personalFinancialAssetsID",personalFinancialAssetsID);
+                flag=personalFinancialAssetsService.updateByWrapper(personalFinancialAssets,wrapper);
+
+                updateEarn.updateHoldEarn(personalFinancialAssetsID);
+
+                /** 更新今日收益 */
+                updateEarn.updateDayEarn(personalFinancialAssetsID);
+
+                /*********************** 新增操作记录 ********************/
+                // 获取当前时间
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//可以方便地修改日期格式
+                Date oprateTime=dateFormat.parse(dateFormat.format(new Date()));
+
+                //获取剩余持有资产
+                float holdAssets=personalFinancialAssetsService.selectByWrapperReturnBean(wrapper).getHoldAssets();
+
+                // 声明 HistoricalOperation 实体类供存数据
+                HistoricalOperation historicalOperation=new HistoricalOperation();
+
+                /**
+                 * 个人资产ID: personalFinancialAssetsID
+                 * 资产ID: productCode
+                 * 用户ID: bean.getUserid()
+                 * 操作时间：new DateTime()
+                 * 操作名称：卖出
+                 * 资产名称：bean.getProductName()
+                 * 操作金额：newRedemption（赎回资产）
+                 * 剩余持有资产：personalFinancialAssetsService.selectByWrapperReturnBean(wrapper).getHoldAssets();
+                 */
+                historicalOperation.setPersonalFinancialAssetsID(personalFinancialAssetsID);
+                historicalOperation.setProductCode(productCode);
+                historicalOperation.setUserid(bean.getUserid());
+                historicalOperation.setOperatingdate(oprateTime);
+                historicalOperation.setOperationName("卖出");
+                historicalOperation.setProductName(bean.getProductName());
+                historicalOperation.setOprateAmount(newRedemption);
+                historicalOperation.setHoldAssets(holdAssets);
+                // 添加记录
+                historicalOperationService.insert(historicalOperation);
+
+            }catch (Exception e){
+                throw e;
+            }
         }
         /**
          * service 读取资产份额
@@ -343,7 +445,8 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
      * @return
      */
     @PostMapping("addPositions")
-    public int addPositions (@RequestBody(required = false) PersonalFinancialAssets bean){
+    public int addPositions (@RequestBody(required = false) PersonalFinancialAssets bean) throws ParseException {
+        int flag=0;
         /** 查找出已存在的对应的资产记录(userid,productCode,status) */
         QueryWrapper<PersonalFinancialAssets> wrapper=new QueryWrapper<>();
         String productCode=bean.getProductCode();
@@ -364,113 +467,215 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
         String productType=financialProduct.getProductType();
 
         if(productType.equals("股票")){
-            // 查询: 当天该产品净值，即为买入成本      参数：买入时间 & productCode
-            QueryWrapper<StockEarnings> stockWrapper=new QueryWrapper<>();
+            try{
+                // 查询: 当天该产品净值，即为买入成本      参数：买入时间 & productCode
+                QueryWrapper<StockEarnings> stockWrapper=new QueryWrapper<>();
 
-            // 转换：将日期转换为String类型才可以查询到结果
-            SimpleDateFormat formatter = new SimpleDateFormat( "yyyy-MM-dd ");
-            String dateStirng =  formatter.format(bean.getBuyTime());
+                // 转换：将日期转换为String类型才可以查询到结果
+                SimpleDateFormat formatter = new SimpleDateFormat( "yyyy-MM-dd ");
+                String dateStirng =  formatter.format(bean.getBuyTime());
 
-            stockWrapper.eq("earnings_date",dateStirng);
-            stockWrapper.eq("productCode",bean.getProductCode());
-            StockEarnings stockEarnings=stockEarningsService.selectByWrapperReturnBean(stockWrapper);
+                stockWrapper.eq("earnings_date",dateStirng);
+                stockWrapper.eq("productCode",bean.getProductCode());
+                StockEarnings stockEarnings=stockEarningsService.selectByWrapperReturnBean(stockWrapper);
 
-            // holdingUnitPrice：持有单价
-            float holdingUnitPrice=stockEarnings.getStockMarketValue();
+                // holdingUnitPrice：持有单价
+                float holdingUnitPrice=stockEarnings.getStockMarketValue();
 
-            /**
-             * 新购入金额 = 新购入份额 * 对应日期净值
-             * 新份额 = 新购入份额 + 旧份额
-             * 新持有资产 = 新购入金额 + 旧持仓资产
-             * 新持仓成本 = 新购入金额 + 旧持仓成本
-             */
-            float newBuyAssets=bean.getAmountOfAssets()*holdingUnitPrice;
-            float newAmountOfAssets=bean.getAmountOfAssets()+personalFinancialAssets.getAmountOfAssets();
-            float newHoldAssets=newBuyAssets+personalFinancialAssets.getHoldAssets();
-            float newHoldingCost=newBuyAssets+personalFinancialAssets.getHoldingCost();
+                /**
+                 * 新购入金额 = 新购入份额 * 对应日期净值
+                 * 新份额 = 新购入份额 + 旧份额
+                 * 新持有资产 = 新购入金额 + 旧持仓资产
+                 * 新持仓成本 = 新购入金额 + 旧持仓成本
+                 */
+                float newBuyAssets=bean.getAmountOfAssets()*holdingUnitPrice;
+                float newAmountOfAssets=bean.getAmountOfAssets()+personalFinancialAssets.getAmountOfAssets();
+                float newHoldAssets=newBuyAssets+personalFinancialAssets.getHoldAssets();
+                float newHoldingCost=newBuyAssets+personalFinancialAssets.getHoldingCost();
 
-            System.out.println("newAmountOfAssets"+newAmountOfAssets);
-            System.out.println("holdAssets"+newHoldAssets);
-            System.out.println("newBuyAssets"+newBuyAssets);
-            System.out.println("newHoldingCost"+newHoldingCost);
-            /** 将更新的值赋给该条记录 */
-            personalFinancialAssets.setAmountOfAssets(newAmountOfAssets);
-            personalFinancialAssets.setHoldAssets(newHoldAssets);
-            personalFinancialAssets.setHoldingCost(newHoldingCost);
+                System.out.println("newAmountOfAssets"+newAmountOfAssets);
+                System.out.println("holdAssets"+newHoldAssets);
+                System.out.println("newBuyAssets"+newBuyAssets);
+                System.out.println("newHoldingCost"+newHoldingCost);
+                /** 将更新的值赋给该条记录 */
+                personalFinancialAssets.setAmountOfAssets(newAmountOfAssets);
+                personalFinancialAssets.setHoldAssets(newHoldAssets);
+                personalFinancialAssets.setHoldingCost(newHoldingCost);
 
-            /** 更新数值（bean & 资产ID） */
-            QueryWrapper<PersonalFinancialAssets> personalFinancialAssetsQueryWrapper=new QueryWrapper<>();
-            personalFinancialAssetsQueryWrapper.eq("personalFinancialAssetsID",personalFinancialAssets.getPersonalFinancialAssetsID());
-            return personalFinancialAssetsService.updateByWrapper(personalFinancialAssets,personalFinancialAssetsQueryWrapper);
+                /** 更新数值（bean & 资产ID） */
+                QueryWrapper<PersonalFinancialAssets> personalFinancialAssetsQueryWrapper=new QueryWrapper<>();
+                personalFinancialAssetsQueryWrapper.eq("personalFinancialAssetsID",personalFinancialAssets.getPersonalFinancialAssetsID());
+                flag=personalFinancialAssetsService.updateByWrapper(personalFinancialAssets,personalFinancialAssetsQueryWrapper);
+
+                /******************** 新增操作记录 ********************/
+                // 获取当前时间
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//可以方便地修改日期格式
+                Date oprateTime=dateFormat.parse(dateFormat.format(new Date()));
+
+                // 声明 HistoricalOperation 实体类供存数据
+                HistoricalOperation historicalOperation=new HistoricalOperation();
+
+                /**
+                 * 个人资产ID: personalFinancialAssets.getPersonalFinancialAssetsID();
+                 * 资产ID: productCode
+                 * 用户ID: userid
+                 * 操作时间：new DateTime()
+                 * 操作名称：加仓
+                 * 资产名称：bean.getProductName()
+                 * 操作金额：newBuyAssets（购入金额）
+                 * 剩余持有资产：newHoldAssets
+                 */
+                historicalOperation.setPersonalFinancialAssetsID(personalFinancialAssets.getPersonalFinancialAssetsID());;
+                historicalOperation.setProductCode(productCode);
+                historicalOperation.setUserid(userid);
+                historicalOperation.setOperatingdate(oprateTime);
+                historicalOperation.setOperationName("加仓");
+                historicalOperation.setProductName(bean.getProductName());
+                historicalOperation.setOprateAmount(bean.getHoldingCost());
+                historicalOperation.setHoldAssets(newHoldAssets);
+                // 新增操作记录
+                historicalOperationService.insert(historicalOperation);
+            }catch (Exception e){
+                throw e;
+            }
         }else if(productType.equals("基金")){
-            // 查询: 当天该产品净值，即为买入成本      参数：买入时间 & productCode
-            QueryWrapper<FundEarnings> fundEarningsQueryWrapper=new QueryWrapper<>();
+            try{
+                // 查询: 当天该产品净值，即为买入成本      参数：买入时间 & productCode
+                QueryWrapper<FundEarnings> fundEarningsQueryWrapper=new QueryWrapper<>();
 
-            // 转换：将日期转换为String类型才可以查询到结果
-            SimpleDateFormat formatter = new SimpleDateFormat( "yyyy-MM-dd ");
-            String dateStirng =  formatter.format(bean.getBuyTime());
+                // 转换：将日期转换为String类型才可以查询到结果
+                SimpleDateFormat formatter = new SimpleDateFormat( "yyyy-MM-dd ");
+                String dateStirng =  formatter.format(bean.getBuyTime());
 
-            fundEarningsQueryWrapper.eq("earningsDate",dateStirng);
-            fundEarningsQueryWrapper.eq("productCode",bean.getProductCode());
-            FundEarnings fundEarnings=fundEarningsService.selectByWrapperReturnBean(fundEarningsQueryWrapper);
+                fundEarningsQueryWrapper.eq("earningsDate",dateStirng);
+                fundEarningsQueryWrapper.eq("productCode",bean.getProductCode());
+                FundEarnings fundEarnings=fundEarningsService.selectByWrapperReturnBean(fundEarningsQueryWrapper);
 
-            // 根据当天净值，作为购入的单价  holdingUnitPrice：持有单价
-            float holdingNetWorth=fundEarnings.getNetWorth();
+                // 根据当天净值，作为购入的单价  holdingUnitPrice：持有单价
+                float holdingNetWorth=fundEarnings.getNetWorth();
 
-            /**
-             * （购入金额）
-             * 新持仓成本 = 新购入金额 + 旧持仓成本
-             * 新持有资产 = 新购入金额 + 旧持仓资产
-             * 新份额 = 新购入金额 / 对应日期净值 + 旧份额
-             */
-            float newHoldingCost=bean.getHoldingCost()+personalFinancialAssets.getHoldingCost();
-            float newHoldAssets=bean.getHoldingCost()+personalFinancialAssets.getHoldAssets();
-            float newAmountOfAssets=bean.getHoldingCost()/holdingNetWorth+personalFinancialAssets.getAmountOfAssets();
+                /**
+                 * （购入金额）
+                 * 新持仓成本 = 新购入金额 + 旧持仓成本
+                 * 新持有资产 = 新购入金额 + 旧持仓资产
+                 * 新份额 = 新购入金额 / 对应日期净值 + 旧份额
+                 */
+                float newHoldingCost=bean.getHoldingCost()+personalFinancialAssets.getHoldingCost();
+                float newHoldAssets=bean.getHoldingCost()+personalFinancialAssets.getHoldAssets();
+                float newAmountOfAssets=bean.getHoldingCost()/holdingNetWorth+personalFinancialAssets.getAmountOfAssets();
 
-            // 赋值
-            personalFinancialAssets.setAmountOfAssets(newAmountOfAssets);
-            personalFinancialAssets.setHoldAssets(newHoldAssets);
-            personalFinancialAssets.setHoldingCost(newHoldingCost);
-            /** 更新数值（bean & 资产ID） */
-            QueryWrapper<PersonalFinancialAssets> personalFinancialAssetsQueryWrapper=new QueryWrapper<>();
-            personalFinancialAssetsQueryWrapper.eq("personalFinancialAssetsID",personalFinancialAssets.getPersonalFinancialAssetsID());
-            return personalFinancialAssetsService.updateByWrapper(personalFinancialAssets,personalFinancialAssetsQueryWrapper);
+                // 赋值
+                personalFinancialAssets.setAmountOfAssets(newAmountOfAssets);
+                personalFinancialAssets.setHoldAssets(newHoldAssets);
+                personalFinancialAssets.setHoldingCost(newHoldingCost);
+                /** 更新数值（bean & 资产ID） */
+                QueryWrapper<PersonalFinancialAssets> personalFinancialAssetsQueryWrapper=new QueryWrapper<>();
+                personalFinancialAssetsQueryWrapper.eq("personalFinancialAssetsID",personalFinancialAssets.getPersonalFinancialAssetsID());
+                flag= personalFinancialAssetsService.updateByWrapper(personalFinancialAssets,personalFinancialAssetsQueryWrapper);
+
+                /******************** 新增操作记录 ********************/
+                // 获取当前时间
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//可以方便地修改日期格式
+                Date oprateTime=dateFormat.parse(dateFormat.format(new Date()));
+
+                // 声明 HistoricalOperation 实体类供存数据
+                HistoricalOperation historicalOperation=new HistoricalOperation();
+
+
+                /**
+                 * 个人资产ID: personalFinancialAssets.getPersonalFinancialAssetsID();
+                 * 资产ID: productCode
+                 * 用户ID: userid
+                 * 操作时间：new DateTime()
+                 * 操作名称：加仓
+                 * 资产名称：bean.getProductName()
+                 * 操作金额：bean.getHoldingCost()（购入金额）
+                 * 剩余持有资产：newHoldAssets
+                 */
+                historicalOperation.setPersonalFinancialAssetsID(personalFinancialAssets.getPersonalFinancialAssetsID());;
+                historicalOperation.setProductCode(productCode);
+                historicalOperation.setUserid(userid);
+                historicalOperation.setOperatingdate(oprateTime);
+                historicalOperation.setOperationName("加仓");
+                historicalOperation.setProductName(bean.getProductName());
+                historicalOperation.setOprateAmount(bean.getHoldingCost());
+                historicalOperation.setHoldAssets(newHoldAssets);
+                // 新增操作记录
+                historicalOperationService.insert(historicalOperation);
+            }catch (Exception e){
+                throw e;
+            }
         }else if(productType.equals("黄金")){
-            // 查询: 当天该产品净值，即为买入成本      参数：买入时间 & productCode
-            QueryWrapper<GoldEarnings> goldEarningsQueryWrapper=new QueryWrapper<>();
+            try {
+                // 查询: 当天该产品净值，即为买入成本      参数：买入时间 & productCode
+                QueryWrapper<GoldEarnings> goldEarningsQueryWrapper=new QueryWrapper<>();
 
-            // 转换：将日期转换为String类型才可以查询到结果
-            SimpleDateFormat formatter = new SimpleDateFormat( "yyyy-MM-dd ");
-            String dateStirng =  formatter.format(bean.getBuyTime());
+                // 转换：将日期转换为String类型才可以查询到结果
+                SimpleDateFormat formatter = new SimpleDateFormat( "yyyy-MM-dd ");
+                String dateStirng =  formatter.format(bean.getBuyTime());
 
-            goldEarningsQueryWrapper.eq("earningsDate",dateStirng);
-            goldEarningsQueryWrapper.eq("productCode",bean.getProductCode());
-            GoldEarnings goldEarnings=goldEarningsService.selectByWrapperReturnBean(goldEarningsQueryWrapper);
+                goldEarningsQueryWrapper.eq("earningsDate",dateStirng);
+                goldEarningsQueryWrapper.eq("productCode",bean.getProductCode());
+                GoldEarnings goldEarnings=goldEarningsService.selectByWrapperReturnBean(goldEarningsQueryWrapper);
 
-            // 根据当天净值，作为购入的单价  holdingUnitPrice：持有单价
-            float holdingNetWorth=goldEarnings.getGoldPrice();
+                // 根据当天净值，作为购入的单价  holdingUnitPrice：持有单价
+                float holdingNetWorth=goldEarnings.getGoldPrice();
 
-            /**
-             * （购入金额）
-             * 新持仓成本 = 新购入金额 + 旧持仓成本
-             * 新持有资产 = 新购入金额 + 旧持仓资产
-             * 新份额 = 新购入金额 / 对应日期净值 + 旧份额
-             */
-            float newHoldingCost=bean.getHoldingCost()+personalFinancialAssets.getHoldingCost();
-            float newHoldAssets=bean.getHoldingCost()+personalFinancialAssets.getHoldAssets();
-            float newAmountOfAssets=bean.getHoldingCost()/holdingNetWorth+personalFinancialAssets.getAmountOfAssets();
+                /**
+                 * （购入金额）
+                 * 新持仓成本 = 新购入金额 + 旧持仓成本
+                 * 新持有资产 = 新购入金额 + 旧持仓资产
+                 * 新份额 = 新购入金额 / 对应日期净值 + 旧份额
+                 */
+                float newHoldingCost=bean.getHoldingCost()+personalFinancialAssets.getHoldingCost();
+                float newHoldAssets=bean.getHoldingCost()+personalFinancialAssets.getHoldAssets();
+                float newAmountOfAssets=bean.getHoldingCost()/holdingNetWorth+personalFinancialAssets.getAmountOfAssets();
 
-            // 赋值
-            personalFinancialAssets.setAmountOfAssets(newAmountOfAssets);
-            personalFinancialAssets.setHoldAssets(newHoldAssets);
-            personalFinancialAssets.setHoldingCost(newHoldingCost);
-            /** 更新数值（bean & 资产ID） */
-            QueryWrapper<PersonalFinancialAssets> personalFinancialAssetsQueryWrapper=new QueryWrapper<>();
-            personalFinancialAssetsQueryWrapper.eq("personalFinancialAssetsID",personalFinancialAssets.getPersonalFinancialAssetsID());
-            return personalFinancialAssetsService.updateByWrapper(personalFinancialAssets,personalFinancialAssetsQueryWrapper);
+                // 赋值
+                personalFinancialAssets.setAmountOfAssets(newAmountOfAssets);
+                personalFinancialAssets.setHoldAssets(newHoldAssets);
+                personalFinancialAssets.setHoldingCost(newHoldingCost);
+                /** 更新数值（bean & 资产ID） */
+                QueryWrapper<PersonalFinancialAssets> personalFinancialAssetsQueryWrapper=new QueryWrapper<>();
+                personalFinancialAssetsQueryWrapper.eq("personalFinancialAssetsID",personalFinancialAssets.getPersonalFinancialAssetsID());
+                flag= personalFinancialAssetsService.updateByWrapper(personalFinancialAssets,personalFinancialAssetsQueryWrapper);
+
+                /******************** 新增操作记录 ********************/
+                // 获取当前时间
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//可以方便地修改日期格式
+                Date oprateTime=dateFormat.parse(dateFormat.format(new Date()));
+
+                // 声明 HistoricalOperation 实体类供存数据
+                HistoricalOperation historicalOperation=new HistoricalOperation();
+
+
+                /**
+                 * 个人资产ID: personalFinancialAssets.getPersonalFinancialAssetsID();
+                 * 资产ID: productCode
+                 * 用户ID: userid
+                 * 操作时间：new DateTime()
+                 * 操作名称：加仓
+                 * 资产名称：bean.getProductName()
+                 * 操作金额：bean.getHoldingCost()（购入金额）
+                 * 剩余持有资产：newHoldAssets
+                 */
+                historicalOperation.setPersonalFinancialAssetsID(personalFinancialAssets.getPersonalFinancialAssetsID());;
+                historicalOperation.setProductCode(productCode);
+                historicalOperation.setUserid(userid);
+                historicalOperation.setOperatingdate(oprateTime);
+                historicalOperation.setOperationName("加仓");
+                historicalOperation.setProductName(bean.getProductName());
+                historicalOperation.setOprateAmount(bean.getHoldingCost());
+                historicalOperation.setHoldAssets(newHoldAssets);
+                // 新增操作记录
+                historicalOperationService.insert(historicalOperation);
+            }catch (Exception e){
+                throw e;
+            }
         }else{
             return 0;
         }
+        return flag;
     }
 
     /**
@@ -522,14 +727,13 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
     @Override
     @PostMapping("insert")
     public int insert(@RequestBody(required = false) PersonalFinancialAssets bean) throws ParseException {
-
+        int flag=0;
+        /** 查询产品是否存在的条件 */
         QueryWrapper<PersonalFinancialAssets> personalFinancialAssetsQueryWrapper=new QueryWrapper<>();
         personalFinancialAssetsQueryWrapper.eq("userid",bean.getUserid());
         personalFinancialAssetsQueryWrapper.eq("productCode",bean.getProductCode());
         personalFinancialAssetsQueryWrapper.eq("status",0);
-        // 获取资产ID供更新收益
-        PersonalFinancialAssets personalFinancialAssets=new PersonalFinancialAssets();
-        Long financialID=personalFinancialAssets.getPersonalFinancialAssetsID();
+
         // 方法：判断产品是否存在
         int isExist=personalFinancialAssetsService.selectByWrapperReturnInt(personalFinancialAssetsQueryWrapper);
         System.out.println("isExist:"+isExist);
@@ -545,107 +749,228 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
             DecimalFormat dfFour =new DecimalFormat("#.0000");
 
             if(productType.equals("股票")){
-                // 获取持有份额
-                float amountOfAssets=bean.getAmountOfAssets();
+               try{
+                   // 获取持有份额
+                   float amountOfAssets=bean.getAmountOfAssets();
 
-                // 查询: 当天该产品净值，即为买入成本      参数：买入时间 & productCode
-                QueryWrapper<StockEarnings> stockWrapper=new QueryWrapper<>();
+                   // 查询: 当天该产品净值，即为买入成本      参数：买入时间 & productCode
+                   QueryWrapper<StockEarnings> stockWrapper=new QueryWrapper<>();
 
-                // 转换：将日期转换为String类型才可以查询到结果
-                SimpleDateFormat formatter = new SimpleDateFormat( "yyyy-MM-dd ");
-                String dateStirng =  formatter.format(bean.getBuyTime());
+                   // 转换：将日期转换为String类型才可以查询到结果
+                   SimpleDateFormat formatter = new SimpleDateFormat( "yyyy-MM-dd ");
+                   String dateStirng =  formatter.format(bean.getBuyTime());
 
-                stockWrapper.eq("earnings_date",dateStirng);
-                stockWrapper.eq("productCode",bean.getProductCode());
-                StockEarnings stockEarnings=stockEarningsService.selectByWrapperReturnBean(stockWrapper);
+                   stockWrapper.eq("earnings_date",dateStirng);
+                   stockWrapper.eq("productCode",bean.getProductCode());
+                   StockEarnings stockEarnings=stockEarningsService.selectByWrapperReturnBean(stockWrapper);
 
-                // holdingUnitPrice：持有单价
-                float holdingUnitPrice=stockEarnings.getStockMarketValue();
-                // holdingCost：持仓成本
-                /** 持仓成本 = 持有单价 * 持仓份额(int) */
-                float holdingCost=holdingUnitPrice*amountOfAssets;
-                /** 计算之后的 holdingCost 存进 bean中 */
-                bean.setHoldingCost(holdingCost);
-                /** 在日期原有基础上增加一天，弥补系统少算的一天 */
-                GregorianCalendar gc=new GregorianCalendar();
-                gc.setTime(bean.getBuyTime());
-                // 由于存进mysql时会减少一天，故在今天的基础上加一天=明天
+                   // holdingUnitPrice：持有单价
+                   float holdingUnitPrice=stockEarnings.getStockMarketValue();
+                   // holdingCost：持仓成本
+                   /** 持仓成本 = 持有单价 * 持仓份额(int) */
+                   float holdingCost=holdingUnitPrice*amountOfAssets;
+                   /** 计算之后的 holdingCost 存进 bean中 */
+                   bean.setHoldingCost(holdingCost);
+                   /** 在日期原有基础上增加一天，弥补系统少算的一天 */
+                   GregorianCalendar gc=new GregorianCalendar();
+                   gc.setTime(bean.getBuyTime());
+                   // 由于存进mysql时会减少一天，故在今天的基础上加一天=明天
 //                gc.add(5,1);
-                bean.setBuyTime(gc.getTime());
+                   bean.setBuyTime(gc.getTime());
 
-                int insertFlag=personalFinancialAssetsService.insert(bean);
-                /** 调用工具类更新个人资产的今日收益和持有收益 */
-                updateEarn.updateDayEarn(financialID);
-                updateEarn.updateHoldEarn(financialID);
-                return insertFlag;
+                   int insertFlag=personalFinancialAssetsService.insert(bean);
+
+                   // 获取资产ID供更新收益
+                   QueryWrapper<PersonalFinancialAssets> wrapper=new QueryWrapper<>();
+                   wrapper.eq("productCode",bean.getProductCode());
+                   wrapper.eq("userid",bean.getUserid());
+                   wrapper.eq("status",0);
+                   PersonalFinancialAssets personalFinancialAssets=personalFinancialAssetsService.selectByWrapperReturnBean(wrapper);
+                   Long financialID=personalFinancialAssets.getPersonalFinancialAssetsID();
+                   /** 调用工具类更新个人资产的今日收益和持有收益 */
+                   updateEarn.updateDayEarn(financialID);
+                   updateEarn.updateHoldEarn(financialID);
+                   flag= insertFlag;
+
+                   /********************* 新增操作记录 **********************/
+                   // 获取当前时间
+                   SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//可以方便地修改日期格式
+                   Date oprateTime=dateFormat.parse(dateFormat.format(new Date()));
+
+                   // 声明 HistoricalOperation 实体类供存数据
+                   HistoricalOperation historicalOperation=new HistoricalOperation();
+                   /**
+                    * 个人资产ID: personalFinancialAssets.getPersonalFinancialAssetsID();
+                    * 资产ID: bean.getProductCode()
+                    * 用户ID: bean.getUserid()
+                    * 操作时间：new DateTime()
+                    * 操作名称：买入
+                    * 资产名称：bean.getProductName()
+                    * 操作金额：holdingCost（购入金额）
+                    * 剩余持有资产：holdingCost
+                    */
+                   historicalOperation.setPersonalFinancialAssetsID(financialID);
+                   historicalOperation.setProductCode(bean.getProductCode());
+                   historicalOperation.setUserid(bean.getUserid());
+                   historicalOperation.setOperatingdate(oprateTime);
+                   historicalOperation.setOperationName("买入");
+                   historicalOperation.setProductName(bean.getProductName());
+                   historicalOperation.setOprateAmount(holdingCost);
+                   historicalOperation.setHoldAssets(holdingCost);
+
+                   historicalOperationService.insert(historicalOperation);
+               }catch (Exception e){
+                   throw e;
+               }
             }else if(productType.equals("基金")){
-                // 获取持仓成本（即买入金额）
-                float holdingCost=bean.getHoldingCost();
+                try {
+                    // 获取持仓成本（即买入金额）
+                    float holdingCost=bean.getHoldingCost();
 
-                // 查询: 当天该产品净值，即为买入成本      参数：买入时间 & productCode
-                QueryWrapper<FundEarnings> fundWrapper=new QueryWrapper<>();
-                // 转换：将日期转换为String类型才可以查询到结果
-                SimpleDateFormat formatter = new SimpleDateFormat( "yyyy-MM-dd ");
-                String dateStirng =  formatter.format(bean.getBuyTime());
+                    // 查询: 当天该产品净值，即为买入成本      参数：买入时间 & productCode
+                    QueryWrapper<FundEarnings> fundWrapper=new QueryWrapper<>();
+                    // 转换：将日期转换为String类型才可以查询到结果
+                    SimpleDateFormat formatter = new SimpleDateFormat( "yyyy-MM-dd ");
+                    String dateStirng =  formatter.format(bean.getBuyTime());
 
-                fundWrapper.eq("earningsDate",dateStirng);
-                fundWrapper.eq("productCode",bean.getProductCode());
-                FundEarnings fundEarnings=fundEarningsService.selectByWrapperReturnBean(fundWrapper);
+                    fundWrapper.eq("earningsDate",dateStirng);
+                    fundWrapper.eq("productCode",bean.getProductCode());
+                    FundEarnings fundEarnings=fundEarningsService.selectByWrapperReturnBean(fundWrapper);
 
-                // holdingUnitPrice：持有单价
-                float holdingUnitPrice=fundEarnings.getNetWorth();
-                // holdingCost：持仓成本
-                /** 持仓份额(float) = 持仓成本 / 持有单价 */
-                float amountOfAssets=Float.parseFloat(dfFour.format(holdingCost/holdingUnitPrice));
-                /** 计算之后的 holdingCost 存进 bean中 */
-                bean.setAmountOfAssets(amountOfAssets);
-                /** 在日期原有基础上增加一天，弥补系统少算的一天 */
-                GregorianCalendar gc=new GregorianCalendar();
-                gc.setTime(bean.getBuyTime());
-                // 在今天的基础上加一天=明天
-                gc.add(5,1);
-                bean.setBuyTime(gc.getTime());
-                // TODO: 当amountOfAssets<1时会变为0
+                    // holdingUnitPrice：持有单价
+                    float holdingUnitPrice=fundEarnings.getNetWorth();
+                    // holdingCost：持仓成本
+                    /** 持仓份额(float) = 持仓成本 / 持有单价 */
+                    float amountOfAssets=Float.parseFloat(dfFour.format(holdingCost/holdingUnitPrice));
+                    bean.setAmountOfAssets(amountOfAssets);
+                    /** 在日期原有基础上增加一天，弥补系统少算的一天 */
+                    GregorianCalendar gc=new GregorianCalendar();
+                    gc.setTime(bean.getBuyTime());
+                    // 在今天的基础上加一天=明天
+                    gc.add(5,1);
+                    bean.setBuyTime(gc.getTime());
+                    // TODO: 当amountOfAssets<1时会变为0
 
-                int insertFlag=personalFinancialAssetsService.insert(bean);
-                /** 调用工具类更新个人资产的今日收益和持有收益 */
-                updateEarn.updateDayEarn(financialID);
-                updateEarn.updateHoldEarn(financialID);
-                return insertFlag;
+                    int insertFlag=personalFinancialAssetsService.insert(bean);
+
+                    // 获取资产ID供更新收益
+                    QueryWrapper<PersonalFinancialAssets> wrapper=new QueryWrapper<>();
+                    wrapper.eq("productCode",bean.getProductCode());
+                    wrapper.eq("userid",bean.getUserid());
+                    wrapper.eq("status",0);
+                    PersonalFinancialAssets personalFinancialAssets=personalFinancialAssetsService.selectByWrapperReturnBean(wrapper);
+                    Long financialID=personalFinancialAssets.getPersonalFinancialAssetsID();
+
+                    /** 调用工具类更新个人资产的今日收益和持有收益 */
+                    updateEarn.updateDayEarn(financialID);
+                    updateEarn.updateHoldEarn(financialID);
+                    flag= insertFlag;
+
+                    /********************* 新增操作记录 **********************/
+                    // 获取当前时间
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//可以方便地修改日期格式
+                    Date oprateTime=dateFormat.parse(dateFormat.format(new Date()));
+
+                    // 声明 HistoricalOperation 实体类供存数据
+                    HistoricalOperation historicalOperation=new HistoricalOperation();
+                    /**
+                     * 个人资产ID: personalFinancialAssets.getPersonalFinancialAssetsID();
+                     * 资产ID: bean.getProductCode()
+                     * 用户ID: bean.getUserid()
+                     * 操作时间：new DateTime()
+                     * 操作名称：买入
+                     * 资产名称：bean.getProductName()
+                     * 操作金额：holdingCost（购入金额）
+                     * 剩余持有资产：holdingCost
+                     */
+                    historicalOperation.setPersonalFinancialAssetsID(financialID);
+                    historicalOperation.setProductCode(bean.getProductCode());
+                    historicalOperation.setUserid(bean.getUserid());
+                    historicalOperation.setOperatingdate(oprateTime);
+                    historicalOperation.setOperationName("买入");
+                    historicalOperation.setProductName(bean.getProductName());
+                    historicalOperation.setOprateAmount(holdingCost);
+                    historicalOperation.setHoldAssets(holdingCost);
+
+                    historicalOperationService.insert(historicalOperation);
+                }catch (Exception e){
+                    throw e;
+                }
             }else if(productType.equals("黄金")){
-                // 获取持仓成本（即买入金额）
-                float holdingCost=bean.getHoldingCost();
+                try {
+                    // 获取持仓成本（即买入金额）
+                    float holdingCost=bean.getHoldingCost();
 
-                // 查询: 当天该产品净值，即为买入成本      参数：买入时间 & productCode
-                QueryWrapper<GoldEarnings> goldWrapper=new QueryWrapper<>();
+                    // 查询: 当天该产品净值，即为买入成本      参数：买入时间 & productCode
+                    QueryWrapper<GoldEarnings> goldWrapper=new QueryWrapper<>();
 
-                SimpleDateFormat formatter = new SimpleDateFormat( "yyyy-MM-dd ");
-                String dateStirng =  formatter.format(bean.getBuyTime());
+                    SimpleDateFormat formatter = new SimpleDateFormat( "yyyy-MM-dd ");
+                    String dateStirng =  formatter.format(bean.getBuyTime());
 
-                goldWrapper.eq("earningsDate",dateStirng);
-                goldWrapper.eq("productCode",bean.getProductCode());
-                GoldEarnings goldEarnings=goldEarningsService.selectByWrapperReturnBean(goldWrapper);
+                    goldWrapper.eq("earningsDate",dateStirng);
+                    goldWrapper.eq("productCode",bean.getProductCode());
+                    GoldEarnings goldEarnings=goldEarningsService.selectByWrapperReturnBean(goldWrapper);
 
-                // holdingUnitPrice：持有单价
-                float holdingUnitPrice=goldEarnings.getGoldPrice();
-                // holdingCost：持仓成本
-                /** 持仓份额(float) = 持仓成本 / 持有单价 */
-                float amountOfAssets=Float.parseFloat(dfFour.format(holdingCost/holdingUnitPrice));
-                /** 计算之后的 holdingCost 存进 bean中 */
-                bean.setAmountOfAssets(amountOfAssets);
-                /** 在日期原有基础上增加一天，弥补系统少算的一天 */
-                GregorianCalendar gc=new GregorianCalendar();
-                gc.setTime(bean.getBuyTime());
-                // 在今天的基础上加一天=明天
-                gc.add(5,1);
-                bean.setBuyTime(gc.getTime());
+                    // holdingUnitPrice：持有单价
+                    float holdingUnitPrice=goldEarnings.getGoldPrice();
+                    // holdingCost：持仓成本
+                    /** 持仓份额(float) = 持仓成本 / 持有单价 */
+                    float amountOfAssets=Float.parseFloat(dfFour.format(holdingCost/holdingUnitPrice));
+
+                    bean.setAmountOfAssets(amountOfAssets);
+                    /** 在日期原有基础上增加一天，弥补系统少算的一天 */
+                    GregorianCalendar gc=new GregorianCalendar();
+                    gc.setTime(bean.getBuyTime());
+                    // 在今天的基础上加一天=明天
+                    gc.add(5,1);
+                    bean.setBuyTime(gc.getTime());
 
 
-                int insertFlag=personalFinancialAssetsService.insert(bean);
-                /** 调用工具类更新个人资产的今日收益和持有收益 */
-                updateEarn.updateDayEarn(financialID);
-                updateEarn.updateHoldEarn(financialID);
-                return insertFlag;
+                    int insertFlag=personalFinancialAssetsService.insert(bean);
+
+                    // 获取资产ID供更新收益
+                    QueryWrapper<PersonalFinancialAssets> wrapper=new QueryWrapper<>();
+                    wrapper.eq("productCode",bean.getProductCode());
+                    wrapper.eq("userid",bean.getUserid());
+                    wrapper.eq("status",0);
+                    PersonalFinancialAssets personalFinancialAssets=personalFinancialAssetsService.selectByWrapperReturnBean(wrapper);
+                    Long financialID=personalFinancialAssets.getPersonalFinancialAssetsID();
+
+                    /** 调用工具类更新个人资产的今日收益和持有收益 */
+                    updateEarn.updateDayEarn(financialID);
+                    updateEarn.updateHoldEarn(financialID);
+                    flag= insertFlag;
+
+                    /********************* 新增操作记录 **********************/
+                    // 获取当前时间
+                    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");//可以方便地修改日期格式
+                    Date oprateTime=dateFormat.parse(dateFormat.format(new Date()));
+
+                    // 声明 HistoricalOperation 实体类供存数据
+                    HistoricalOperation historicalOperation=new HistoricalOperation();
+                    /**
+                     * 个人资产ID: personalFinancialAssets.getPersonalFinancialAssetsID();
+                     * 资产ID: bean.getProductCode()
+                     * 用户ID: bean.getUserid()
+                     * 操作时间：new DateTime()
+                     * 操作名称：买入
+                     * 资产名称：bean.getProductName()
+                     * 操作金额：holdingCost（购入金额）
+                     * 剩余持有资产：holdingCost
+                     */
+                    historicalOperation.setPersonalFinancialAssetsID(financialID);
+                    historicalOperation.setProductCode(bean.getProductCode());
+                    historicalOperation.setUserid(bean.getUserid());
+                    historicalOperation.setOperatingdate(oprateTime);
+                    historicalOperation.setOperationName("买入");
+                    historicalOperation.setProductName(bean.getProductName());
+                    historicalOperation.setOprateAmount(holdingCost);
+                    historicalOperation.setHoldAssets(holdingCost);
+
+                    historicalOperationService.insert(historicalOperation);
+                }catch (Exception e){
+                    throw e;
+                }
             }else {
                 // TODO: 其他类型则返回 0 ，即新增失败
                 return 0;
@@ -657,6 +982,7 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
             /** 其他错误，返回：0 */
             return 0;
         }
+        return flag;
     }
 
     @Override

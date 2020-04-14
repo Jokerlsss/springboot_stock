@@ -38,8 +38,24 @@ public interface PersonalFinancialAssetsMapper extends BaseMapper<PersonalFinanc
     /**
      * 查询个人拥有资产总资产：状态：0（持有）
      * @param userid
-     * @return
+     * @return float:348.00
      */
     @Select("select IFNULL(sum(holdAssets),0) from personalfinancialassets where userid=#{userid} and status=0")
     public float selectSumOfAssets(Long userid);
+
+    /**
+     * 查询个人资产中累计收益最高的资产
+     * @param userid
+     * @return List:{ productName:"股票",totalEarn:348.00 }
+     */
+    @Select("select productCode,productName,IFNULL(sum(totalEarn) ,0) totalEarn from personalfinancialassets where userid=#{userid} group by productName,productCode ORDER BY sum(totalEarn) desc limit 0,1")
+    public List<PersonalFinancialAssets> selectMaxTotalEarn(Long userid);
+
+    /**
+     * 查询个人持有收益最高的资产
+     * @param userid
+     * @return List:{ productName:"股票",holdEarn:348.00 }
+     */
+    @Select("select productCode,productName,IFNULL(holdEarn,0) holdEarn from personalfinancialassets where userid=#{userid} and STATUS=0 ORDER by holdEarn desc limit 0,1")
+    public List<PersonalFinancialAssets> selectMaxHoldEarn(Long userid);
 }

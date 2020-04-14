@@ -1,12 +1,12 @@
 package com.stock.demo.controller;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.stock.demo.pojo.HistoricalOperation;
 import com.stock.demo.service.HistoricalOperationService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -24,13 +24,31 @@ public class HistoricalOperationController implements BaseController<HistoricalO
     @Autowired
     HistoricalOperationService historicalOperationService;
 
+    /**
+     * 查询个人操作记录
+     * @param userID
+     * @return
+     */
+    @GetMapping("listByWrapper")
+    public List<HistoricalOperation> listByWrapper(@RequestParam(value = "userID", required=false ) Long userID){
+        QueryWrapper<HistoricalOperation> wrapper=new QueryWrapper<>();
+        wrapper.eq("userID",userID);
+        return historicalOperationService.selectByWrapperReturnList(wrapper);
+    }
+
     @Override
     public List<HistoricalOperation> list() {
         return null;
     }
 
+    /**
+     * 添加操作记录（可以直接通过service来获取）
+     * @param bean
+     * @return
+     */
     @Override
-    public int insert(HistoricalOperation bean) {
+    @PostMapping("insert")
+    public int insert(@RequestBody(required = false) HistoricalOperation bean) {
         return 0;
     }
 
