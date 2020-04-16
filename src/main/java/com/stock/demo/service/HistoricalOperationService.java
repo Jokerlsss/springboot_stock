@@ -17,7 +17,7 @@ import java.util.List;
 public interface HistoricalOperationService extends BaseService<HistoricalOperation>{
     /**
      * get：操作记录
-     * @param userid
+     * @param wrapper
      * @return List<bean>
      */
     public List<HistoricalOperation> selectByWrapperReturnList(QueryWrapper<HistoricalOperation> wrapper);

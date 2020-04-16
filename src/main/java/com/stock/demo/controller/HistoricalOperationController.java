@@ -26,13 +26,27 @@ public class HistoricalOperationController implements BaseController<HistoricalO
 
     /**
      * 查询个人操作记录
-     * @param userID
+     * @param userid
      * @return
      */
     @GetMapping("listByWrapper")
-    public List<HistoricalOperation> listByWrapper(@RequestParam(value = "userID", required=false ) Long userID){
+    public List<HistoricalOperation> listByWrapper(@RequestParam(value = "userid", required=false ) Long userid){
         QueryWrapper<HistoricalOperation> wrapper=new QueryWrapper<>();
-        wrapper.eq("userID",userID);
+        wrapper.eq("userid",userid);
+        return historicalOperationService.selectByWrapperReturnList(wrapper);
+    }
+
+    /**
+     * 查询个人操作记录：倒序
+     * @param userid
+     * @return
+     */
+    @GetMapping("listForPersonal")
+    public List<HistoricalOperation> listForPersonal(@RequestParam(value = "userid", required=false ) Long userid){
+        QueryWrapper<HistoricalOperation> wrapper = new QueryWrapper<>();
+        wrapper.eq("userid",userid);
+        // 根据日期排倒序
+        wrapper.orderByDesc("operatingdate");
         return historicalOperationService.selectByWrapperReturnList(wrapper);
     }
 
