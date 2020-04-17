@@ -1,10 +1,7 @@
 package com.stock.demo.util;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.stock.demo.mapper.FundEarningsMapper;
-import com.stock.demo.mapper.GoldEarningsMapper;
-import com.stock.demo.mapper.StockEarningsMapper;
-import com.stock.demo.mapper.StockMapper;
+import com.stock.demo.mapper.*;
 import com.stock.demo.pojo.*;
 import com.stock.demo.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +9,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.stereotype.Component;
 
 import java.text.DecimalFormat;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -23,6 +21,9 @@ import java.util.List;
  */
 @Component
 public class UpdateEarn {
+
+    @Autowired
+    private PersonalFinancialAssetsMapper personalFinancialAssetsMapper;
 
     @Autowired
     private PersonalFinancialAssetsService personalFinancialAssetsService;
@@ -48,6 +49,50 @@ public class UpdateEarn {
     @Autowired
     private GoldEarningsMapper goldEarningsMapper;
 
+    @Autowired
+    private HistoryEarningsService historyEarningsService;
+
+    @Autowired
+    private HistoryEarningsMapper historyEarningsMapper;
+
+    @Autowired
+    private UpdateEarn updateEarn;
+
+
+    /**
+     * 更新个人的历史收益（userid & earningsDate & totalDayEarn）
+     * 变更时机：每日收益更新后（包含：项目买入）、项目删除
+     * @param userid
+     * @param earningsDate
+     */
+    public void updateHistoryEarn(Long userid, Date earningsDate) {
+        // TODO: 当表中不存在该记录的时候，用insert，存在时用update
+        /** 根据 userid 查个人资产表中的 dayEarn 的和（status：0），返回 float */
+        QueryWrapper<PersonalFinancialAssets> personalFinancialAssetsQueryWrapper=new QueryWrapper<>();
+        personalFinancialAssetsQueryWrapper.eq("userid",userid);
+        // get：个人当天的今日收益之和
+        float totalDayEarn=personalFinancialAssetsMapper.selectTotalDayEarn(userid);
+
+        /** 查看某人某天的收益记录是否存在 */
+        QueryWrapper<HistoryEarnings> historyEarningsQueryWrapper=new QueryWrapper<>();
+        historyEarningsQueryWrapper.eq("userid",userid);
+        historyEarningsQueryWrapper.eq("earningsdate",earningsDate);
+        int isExist=historyEarningsMapper.selectCount(historyEarningsQueryWrapper);
+
+        /** 根据 userid & earningsDate & dayEarn 调用 service 新增 */
+        HistoryEarnings historyEarnings=new HistoryEarnings();
+        historyEarnings.setDayEarn(totalDayEarn);
+        historyEarnings.setEarningsdate(earningsDate);
+        historyEarnings.setUserid(userid);
+
+        /** 若存在则调用 update ，若不存在则调用 insert */
+        if(isExist==0){
+            historyEarningsService.insert(historyEarnings);
+        }else{
+            historyEarningsService.updateByWrapper(historyEarnings,historyEarningsQueryWrapper);
+        }
+
+    }
     /**
      * 更新：个人资产中的今日收益
      */
@@ -102,6 +147,11 @@ public class UpdateEarn {
 
                 personalFinancialAssetsList.get(i).setDayEarn(dayEarn);
                 personalFinancialAssetsService.updateByWrapper(personalFinancialAssetsList.get(i),personalFinancialAssetsQueryWrapper);
+
+                /** 历史收益：更新用户的（userid & earningsDate）历史收益 */
+                Date earningsDate=stockEarningsLastOne.getEarningsDate();
+                Long userid=personalFinancialAssetsList.get(i).getUserid();
+                updateEarn.updateHistoryEarn(userid,earningsDate);
             }else if(productType.equals("黄金")){
                 GoldEarnings goldEarningsLastOne=goldEarningsMapper.selectLastOneEarnings(productCode);
                 GoldEarnings goldEarningsLastTwo=goldEarningsMapper.selectLastTwoEarnings(productCode);
@@ -126,6 +176,10 @@ public class UpdateEarn {
                 personalFinancialAssetsList.get(i).setDayEarn(dayEarn);
                 personalFinancialAssetsService.updateByWrapper(personalFinancialAssetsList.get(i),personalFinancialAssetsQueryWrapper);
 
+                /** 历史收益：更新用户的（userid & earningsDate）历史收益 */
+                Date earningsDate=goldEarningsLastOne.getEarningsDate();
+                Long userid=personalFinancialAssetsList.get(i).getUserid();
+                updateEarn.updateHistoryEarn(userid,earningsDate);
             }else if(productType.equals("基金")){
                 FundEarnings fundEarningsLastOne=fundEarningsMapper.selectLastOneEarnings(productCode);
                 FundEarnings fundEarningsLastTwo=fundEarningsMapper.selectLastTwoEarnings(productCode);
@@ -149,6 +203,11 @@ public class UpdateEarn {
 
                 personalFinancialAssetsList.get(i).setDayEarn(dayEarn);
                 personalFinancialAssetsService.updateByWrapper(personalFinancialAssetsList.get(i),personalFinancialAssetsQueryWrapper);
+
+                /** 历史收益：更新用户的（userid & earningsDate）历史收益 */
+                Date earningsDate=fundEarningsLastOne.getEarningsDate();
+                Long userid=personalFinancialAssetsList.get(i).getUserid();
+                updateEarn.updateHistoryEarn(userid,earningsDate);
             }
         }
     }

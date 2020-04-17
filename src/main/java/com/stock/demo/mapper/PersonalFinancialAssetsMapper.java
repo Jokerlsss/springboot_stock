@@ -17,7 +17,6 @@ import java.util.List;
  */
 @Mapper
 public interface PersonalFinancialAssetsMapper extends BaseMapper<PersonalFinancialAssets> {
-//    TODO:修改查询方式
     @Select("select a.*,b.productName,b.productType from personalfinancialassets a,financialProduct b WHERE a.userID=#{userID} and a.status=0 and a.productCode=b.productCode")
     public List<PersonalFinancialAssets> selectUserHoldProduct(Long userID);
 
@@ -58,4 +57,12 @@ public interface PersonalFinancialAssetsMapper extends BaseMapper<PersonalFinanc
      */
     @Select("select productCode,productName,IFNULL(holdEarn,0) holdEarn from personalfinancialassets where userid=#{userid} and STATUS=0 ORDER by holdEarn desc limit 0,1")
     public List<PersonalFinancialAssets> selectMaxHoldEarn(Long userid);
+
+    /**
+     * 查询个人的今日收益总和
+     * @param userid
+     * @return
+     */
+    @Select("select IFNULL(sum(dayEarn) ,0) from personalfinancialassets where userid=#{userid} and status=0")
+    public float selectTotalDayEarn(Long userid);
 }
