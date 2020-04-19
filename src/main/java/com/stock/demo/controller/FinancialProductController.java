@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.stock.demo.pojo.*;
 import com.stock.demo.service.*;
+import com.stock.demo.util.UpdateEarn;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -51,6 +52,181 @@ public class FinancialProductController implements BaseController<FinancialProdu
     @Autowired
     FundEarningsService fundEarningsService;
 
+    @Autowired
+    UpdateEarn updateEarn;
+
+    @Autowired
+    DateOprate dateOprate;
+
+    /**
+     * 资产推荐（股票、基金、黄金）
+     * @param productType
+     * @return
+     */
+    @GetMapping("selectRecommendAssets")
+    public List selectRecommendAssets(@RequestParam(value = "productType", required=false ) String productType) throws ParseException {
+        /** 声明结果列表、存放发布日期一年（三年）以上的项目 */
+        List resultList=new ArrayList();
+        List oneYearList=new ArrayList();
+        List threeYearList=new ArrayList();
+
+        /** 声明 Map */
+        Map<String,Object> oneMap = new HashMap<String,Object>(10);
+        Map<String,Object> threeMap = new HashMap<String,Object>(10);
+
+        /** 声明：变量存放一年收益最高的资产信息 */
+        String oneProductCode=null;
+        String oneProductName=null;
+        float oneProductEarnRate=-999;
+
+        /** 声明：变量存放三年收益最高的资产信息 */
+        String threeProductCode=null;
+        String threeProductName=null;
+        float threeProductEarnRate=-999;
+
+        /** 查询： List<financialProduct>，get：发布日期、productCode（状态：在市、productType：productType） */
+        QueryWrapper<FinancialProduct> financialProductQueryWrapper=new QueryWrapper<>();
+        financialProductQueryWrapper.eq("listingStatus","在市");
+        financialProductQueryWrapper.eq("productType",productType);
+        List<FinancialProduct> financialProductList=financialProductService.selectByWrapperReturnList(financialProductQueryWrapper);
+
+        /**
+         * 将符合要求的资产按 一年 & 三年 进行分类存进 List
+         */
+        for(int i=0;i<financialProductList.size();i++){
+            System.out.println("-------------");
+            /** 日期格式 -> String标准格式 */
+            SimpleDateFormat df=new SimpleDateFormat("yyyy-MM-dd");
+            Date oldDate=df.parse(df.format(financialProductList.get(i).getDateOfEstablishment()));
+            Date newDate=df.parse(df.format(new Date()));
+
+            /** 计算两天之差 */
+            Long timeDifference=dateOprate.dayOfLessDate(oldDate,newDate);
+
+            // 声明天数
+            int oneYear=365;
+            int threeYear=1095;
+
+            /** 分年存放符合要求的资产 productCode */
+            if(timeDifference>=oneYear && timeDifference<threeYear){
+                oneYearList.add(financialProductList.get(i).getProductCode());
+            }else if(timeDifference>=threeYear) {
+                /** 拥有三年以上的资产也可以在一年收益率中体现 */
+                threeYearList.add(financialProductList.get(i).getProductCode());
+                oneYearList.add(financialProductList.get(i).getProductCode());
+            }
+
+            /**
+             * 遍历 一年List
+             * 声明 tempProductCode、tempProductName、tempProductEarnRate = -999
+             * 一年收益率 = 计算一年收益率的方法（productCode,productType,12）
+             * if(收益率 > tempProductEarnRate){
+             *     tempProductEarnRate = 收益率
+             *     temp... = ...
+             * }
+             * oneMap.put("tempProductCode",...)
+             * oneMap.put(...)
+             */
+
+            System.out.println("发布日期："+oldDate);
+            System.out.println("今天日期："+newDate);
+            System.out.println("相差："+timeDifference+"天");
+            System.out.println("oneList"+oneYearList);
+            System.out.println("threeList"+threeYearList);
+        }
+
+        /** 遍历：List（一年的收益率），进行比较赋值 */
+        for(int j=0;j<oneYearList.size();j++){
+            System.out.println("(String) oneYearList.get(j)"+oneYearList.get(j));
+            float oneYearRate=updateEarn.getEarnRate((String) oneYearList.get(j),productType,12);
+
+            if(oneYearRate>oneProductEarnRate){
+                /** 给收益率、produtCode 赋值 */
+                oneProductEarnRate=oneYearRate;
+                oneProductCode=(String)oneYearList.get(j);
+                /** 根据 productCode 查找资产名称 */
+                QueryWrapper<FinancialProduct> wrapper=new QueryWrapper<>();
+                wrapper.eq("productCode",oneProductCode);
+                oneProductName=financialProductService.selectByWrapperReturnBean(wrapper).getProductName();
+            }
+        }
+        /** 一年前收益：将 Max 值的变量存放进 map 中 */
+        oneMap.put("oneProductEarnRate",oneProductEarnRate);
+        oneMap.put("oneProductCode",oneProductCode);
+        oneMap.put("oneProductName",oneProductName);
+
+
+        /** 遍历：List（三年的收益率），进行比较赋值 */
+        for(int z=0;z<threeYearList.size();z++){
+            System.out.println("(String) threeYearList.get(z)"+threeYearList.get(z));
+            float threeYearRate=updateEarn.getEarnRate((String) threeYearList.get(z),productType,36);
+
+            if(threeYearRate>threeProductEarnRate){
+                /** 给收益率、produtCode 赋值 */
+                threeProductEarnRate=threeYearRate;
+                threeProductCode=(String)threeYearList.get(z);
+                /** 根据 productCode 查找资产名称 */
+                QueryWrapper<FinancialProduct> wrapper=new QueryWrapper<>();
+                wrapper.eq("productCode",threeProductCode);
+                threeProductName=financialProductService.selectByWrapperReturnBean(wrapper).getProductName();
+            }
+        }
+        /** 三年前收益：将 Max 值的变量存放进 map 中 */
+        threeMap.put("threeProductEarnRate",threeProductEarnRate);
+        threeMap.put("threeProductCode",threeProductCode);
+        threeMap.put("threeProductName",threeProductName);
+
+
+        /** 将一年/三年 map 存进 List 中*/
+        resultList.add(oneMap);
+        resultList.add(threeMap);
+
+        return resultList;
+        /**
+         * 声明：空 List（一年）
+         * 声明：空 List（三年）
+         * 遍历查询出 financialProduct ，get：发布日期、productCode（状态：在市、productType：productType）
+         * get：现在的系统时间
+         * 时间差 = 发布日期 - 系统时间
+         * if(时间差 > 1 年){
+         *     一年 List.add = 该资产 productCode
+         * }else if(时间差 > 3 年){
+         *     三年 List.add = 该资产 productCode
+         * }
+         *
+         * 声明 oneMap
+         * 声明 threeMap
+         * 声明 resultList
+         *
+         * 遍历 一年List
+         * 设置 tempProductCode、tempProductName、tempProductEarnRate = -999、tempProductCode
+         * 一年收益率 = 计算一年收益率的方法（productCode,productType,12）
+         * if(收益率 > tempProductEarnRate){
+         *     tempProductEarnRate = 收益率
+         *     temp... = ...
+         * }
+         * oneMap.put("tempProductCode",...)
+         * oneMap.put(...)
+         *
+         *
+         * 遍历 三年List
+         * 设置 tempProductCode、tempProductName、tempProductEarnRate = -999、tempProductCode
+         * 三年收益率 = 计算三年收益率的方法（productCode,productType,36）
+         * -------- 方法：读取一年前的净值（如果是周末则往后顺延一天）-> 收益率 = （最新净值 - 一年前净值）/一年前净值 -> 返回收益率
+         * if(收益率 > tempProductEarnRate){
+         *     tempProductEarnRate = 收益率
+         *     temp... = ...
+         * }
+         * threeMap.put("tempProductCode",...)
+         * threeMap.put(...)
+         *
+         * resultList.add(oneMap)
+         * resultList.add(threeMap)
+         *
+         * return resultList;
+         */
+    }
+
     /**
      * 根据 productCode 条件更新
      * @param bean
@@ -95,11 +271,6 @@ public class FinancialProductController implements BaseController<FinancialProdu
     @PostMapping("insert")
     @Override
     public int insert(@RequestBody(required = false) FinancialProduct bean) {
-        // TODO: 在新增项目的同时，在 earnings 表中加入：代码、收益日期（等于发布日期）、净值（发布价格）、涨跌幅（第一天为 0）
-        // TODO 股票收益：产品代码(bean.getCode)、收益日期(bean.getDate)、股票市值(stock.selectone(code).getPrice)、日涨跌幅(0)
-        // TODO 基金收益：产品代码、收益日期、净值(fund.selectone(code).getPrice)、日涨跌幅
-        // TODO 黄金收益：产品代码、收益日期、金价(gold.selectone(code).getPrice)、日涨跌幅
-
         // 增加 financialProduct 表记录
         financialProductService.insert(bean);
 
@@ -135,7 +306,6 @@ public class FinancialProductController implements BaseController<FinancialProdu
             QueryWrapper<Fund> queryWrapper=new QueryWrapper<>();
             queryWrapper.eq("productCode",productCode);
             Fund fund=fundService.selectByWrapperReturnBean(queryWrapper);
-            // TODO: 有时候会空指针异常
             float issuePrice=fund.getIssuePrice();
 
             // 赋值给 Earnings 表

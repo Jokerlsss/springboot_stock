@@ -58,6 +58,45 @@ public class UpdateEarn {
     @Autowired
     private UpdateEarn updateEarn;
 
+    /** 一年收益率 = 计算一年收益率的方法（productCode,productType）：保留两位小数*/
+    public float getEarnRate(String productCode,String productType,int month){
+        float earnRate=0;
+        DecimalFormat dfTwo =new DecimalFormat("#.00");
+        // -------- 方法：读取一年前的净值（不用顺延，数据库语句直接取最后一条记录）
+        /** 收益率 = （最新净值 - 一年前净值）/一年前净值 -> 返回收益率 */
+        if(productType.equals("股票")){
+            /** 获取最新净值 */
+            StockEarnings stockEarnings=stockEarningsMapper.selectLastStockEarnings(productCode);
+            float newValue=stockEarnings.getStockMarketValue();
+
+            /** 获取一年/三年前净值 */
+            float oldValue=stockEarningsMapper.getNetWorth(productCode,month);
+
+            /** 获得收益率 */
+            earnRate=Float.parseFloat(dfTwo.format((newValue - oldValue)/oldValue));
+        }else if(productType.equals("基金")){
+            /** 获取最新净值 */
+            FundEarnings fundEarnings=fundEarningsMapper.selectLastOneEarnings(productCode);
+            float newValue=fundEarnings.getNetWorth();
+
+            /** 获取一年/三年前净值 */
+            float oldValue=fundEarningsMapper.getNetWorth(productCode,month);
+
+            /** 获得收益率 */
+            earnRate=Float.parseFloat(dfTwo.format((newValue - oldValue)/oldValue));
+        }else if(productType.equals("黄金")){
+            /** 获取最新净值 */
+            GoldEarnings goldEarnings=goldEarningsMapper.selectLastOneEarnings(productCode);
+            float newValue=goldEarnings.getGoldPrice();
+
+            /** 获取一年/三年前净值 */
+            float oldValue=goldEarningsMapper.getNetWorth(productCode,month);
+
+            /** 获得收益率 */
+            earnRate=Float.parseFloat(dfTwo.format((newValue - oldValue)/oldValue));
+        }
+        return earnRate;
+    }
 
     /**
      * 更新个人的历史收益（userid & earningsDate & totalDayEarn）

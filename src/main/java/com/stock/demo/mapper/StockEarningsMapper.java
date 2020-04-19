@@ -27,4 +27,10 @@ public interface StockEarningsMapper extends BaseMapper<StockEarnings> {
     /** 趋势图：查找某段时间的收益记录  time：-1,-3 ... */
     @Select("select * from stockearnings where productCode=#{productCode} and earnings_date between (SELECT DATE_ADD(now(),INTERVAL #{time} MONTH)) and now()")
     public List<StockEarnings> selectRecordFromTime(String productCode,int time);
+
+    /** 资产推荐：获取一年/三年前的净值
+     *  （time：1,2,3... ;productCode）
+     * */
+    @Select("SELECT stockMarketValue from stockearnings where productCode=#{productCode} and earnings_date between (SELECT DATE_ADD(now(),INTERVAL -#{time} month)) and now() ORDER BY earnings_date ASC limit 0,1")
+    public float getNetWorth(String productCode,int time);
 }

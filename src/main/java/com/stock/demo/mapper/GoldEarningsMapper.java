@@ -28,4 +28,10 @@ public interface GoldEarningsMapper extends BaseMapper<GoldEarnings> {
     /** 趋势图：查找某段时间的收益记录  time：-1,-3 ... */
     @Select("select * from goldearnings where productCode=#{productCode} and earningsDate between (SELECT DATE_ADD(now(),INTERVAL #{time} MONTH)) and now()")
     public List<GoldEarnings> selectRecordFromTime(String productCode, int time);
+
+    /** 资产推荐：获取一年/三年前的净值
+     *  （time：1,2,3... ;productCode）
+     * */
+    @Select("SELECT goldPrice from goldearnings where productCode=#{productCode} and earningsDate between (SELECT DATE_ADD(now(),INTERVAL -#{time} month)) and now() ORDER BY earningsDate ASC limit 0,1")
+    public float getNetWorth(String productCode,int time);
 }

@@ -44,6 +44,25 @@ public class DateOprate {
 
     @Autowired
     private StockEarningsService stockEarningsService;
+
+    /**
+     * 计算两个日期相差几天
+     * @return
+     */
+    public Long dayOfLessDate(Date oldDate,Date newDate){
+        /** 日期标准格式 -> 毫秒 */
+        Long oldSecond=oldDate.getTime();
+        Long newSecond=newDate.getTime();
+
+        /** 时间相减 */
+        Long resultSecond=newSecond-oldSecond;
+
+        /** 将 resultDate 转换为日期格式 */
+        Long resultDate=resultSecond/1000/60/60/24;
+
+        return resultDate;
+    }
+
     /**
      * 判断是否为工作日
      * @param date (String)

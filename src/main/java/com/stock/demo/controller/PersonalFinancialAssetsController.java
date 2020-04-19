@@ -787,8 +787,9 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
                    wrapper.eq("status",0);
                    PersonalFinancialAssets personalFinancialAssets=personalFinancialAssetsService.selectByWrapperReturnBean(wrapper);
                    Long financialID=personalFinancialAssets.getPersonalFinancialAssetsID();
-                   /** 调用工具类更新个人资产的今日收益和持有收益 */
-                   updateEarn.updateDayEarn(financialID);
+                   /** 调用工具类更新个人资产的 持有资产 */
+                   // 买入当天不能有日收益
+//                   updateEarn.updateDayEarn(financialID);
                    updateEarn.updateHoldEarn(financialID);
                    flag= insertFlag;
 
@@ -816,6 +817,7 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
                    historicalOperation.setOperationName("买入");
                    historicalOperation.setProductName(bean.getProductName());
                    historicalOperation.setOprateAmount(holdingCost);
+                   /** 持有资产 */
                    historicalOperation.setHoldAssets(holdingCost);
 
                    historicalOperationService.insert(historicalOperation);
@@ -862,7 +864,8 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
                     Long financialID=personalFinancialAssets.getPersonalFinancialAssetsID();
 
                     /** 调用工具类更新个人资产的今日收益和持有收益 */
-                    updateEarn.updateDayEarn(financialID);
+                    // 买入当天不能有日收益
+//                    updateEarn.updateDayEarn(financialID);
                     updateEarn.updateHoldEarn(financialID);
                     flag= insertFlag;
 
@@ -937,7 +940,8 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
                     Long financialID=personalFinancialAssets.getPersonalFinancialAssetsID();
 
                     /** 调用工具类更新个人资产的今日收益和持有收益 */
-                    updateEarn.updateDayEarn(financialID);
+                    // 买入当天不能有日收益
+//                    updateEarn.updateDayEarn(financialID);
                     updateEarn.updateHoldEarn(financialID);
                     flag= insertFlag;
 
