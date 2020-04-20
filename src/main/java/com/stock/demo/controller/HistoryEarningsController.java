@@ -1,9 +1,16 @@
 package com.stock.demo.controller;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.stock.demo.pojo.HistoryEarnings;
+import com.stock.demo.service.HistoryEarningsService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.text.ParseException;
 import java.util.List;
@@ -15,7 +22,21 @@ import java.util.List;
  * Time: 22:09
  * Description:
  */
+@RestController
+@RequestMapping(path={"/historyEarnings"})
 public class HistoryEarningsController implements BaseController<HistoryEarnings> {
+
+    @Autowired
+    HistoryEarningsService historyEarningsService;
+
+    @GetMapping("getHistoryEarn")
+    public List<HistoryEarnings> listByWrapper(@RequestParam(value = "userid", required=false ) Long userid){
+        QueryWrapper<HistoryEarnings> historyEarningsQueryWrapper=new QueryWrapper<>();
+        historyEarningsQueryWrapper.eq("userid",userid);
+        List<HistoryEarnings> historyEarningsList=historyEarningsService.listByWrapper(historyEarningsQueryWrapper);
+        return historyEarningsList;
+    }
+
     @Override
     public List<HistoryEarnings> list() {
         return null;

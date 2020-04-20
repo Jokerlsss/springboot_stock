@@ -32,6 +32,10 @@ public class HistoryEarningsServiceImpl implements HistoryEarningsService {
         return null;
     }
 
+    public List<HistoryEarnings> listByWrapper(QueryWrapper<HistoryEarnings> wrapper){
+        return historyEarningsMapper.selectList(wrapper);
+    }
+
     @Override
     public int insert(HistoryEarnings bean) {
         return historyEarningsMapper.insert(bean);

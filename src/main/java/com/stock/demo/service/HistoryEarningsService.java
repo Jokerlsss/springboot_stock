@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.stock.demo.pojo.HistoryEarnings;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 /**
  * Created with IntelliJ IDEA.
  * User: 刘铄
@@ -14,4 +16,5 @@ import org.springframework.stereotype.Service;
 @Service
 public interface HistoryEarningsService extends BaseService<HistoryEarnings>{
     public int updateByWrapper(HistoryEarnings historyEarnings, QueryWrapper<HistoryEarnings> wrapper);
+    public List<HistoryEarnings> listByWrapper(QueryWrapper<HistoryEarnings> wrapper);
 }

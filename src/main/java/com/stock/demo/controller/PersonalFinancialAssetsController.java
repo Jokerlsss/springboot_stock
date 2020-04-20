@@ -232,11 +232,12 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
 
             try {
                 /** 在份额、赎回资产更新后，对以下参数进行更新 */
+                /** 今日收益保持原有份额的收益 */
                 /** 更新累计收益、持有收益、持有资产（参数：personalFinancialAssetsID） */
                 updateEarn.updateHoldEarn(personalFinancialAssetsID);
 
-                /** 更新今日收益 */
-                updateEarn.updateDayEarn(personalFinancialAssetsID);
+//                /** 更新今日收益 */
+//                updateEarn.updateDayEarn(personalFinancialAssetsID);
 
                 /********************** 新增操作记录 *********************/
                 // 获取当前时间
@@ -324,8 +325,8 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
 
                 updateEarn.updateHoldEarn(personalFinancialAssetsID);
 
-                /** 更新今日收益 */
-                updateEarn.updateDayEarn(personalFinancialAssetsID);
+//                /** 更新今日收益 */
+//                updateEarn.updateDayEarn(personalFinancialAssetsID);
 
                 /*********************** 新增操作记录 ********************/
                 // 获取当前时间
