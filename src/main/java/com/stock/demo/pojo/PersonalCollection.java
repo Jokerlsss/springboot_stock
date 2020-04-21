@@ -20,6 +20,6 @@ public class PersonalCollection {
     @TableId(value = "productCode")
     private String productCode;
 
-    @TableId(value ="userID")
-    private String userID;
+    @TableId(value ="userid")
+    private Long userid;
 }

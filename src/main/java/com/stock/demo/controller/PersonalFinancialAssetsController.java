@@ -744,6 +744,7 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
             QueryWrapper<FinancialProduct> queryWrapper=new QueryWrapper<>();
             queryWrapper.eq("productCode",bean.getProductCode());
             FinancialProduct financialProduct=financialProductService.selectByWrapperReturnBean(queryWrapper);
+
             String productType=financialProduct.getProductType();
 
             // 保留四位小数
@@ -822,6 +823,13 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
                    historicalOperation.setHoldAssets(holdingCost);
 
                    historicalOperationService.insert(historicalOperation);
+
+                   /** 在原有人气基础上 +1 */
+                   int popularity=financialProduct.getPopularity();
+                   int newPopularity=popularity+1;
+                   financialProduct.setPopularity(newPopularity);
+                   System.out.println(newPopularity);
+                   financialProductService.updateByWrapper(financialProduct,queryWrapper);
                }catch (Exception e){
                    throw e;
                }
@@ -897,6 +905,13 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
                     historicalOperation.setHoldAssets(holdingCost);
 
                     historicalOperationService.insert(historicalOperation);
+
+                    /** 在原有人气基础上 +1 */
+                    int popularity=financialProduct.getPopularity();
+                    int newPopularity=popularity+1;
+                    financialProduct.setPopularity(newPopularity);
+                    System.out.println(newPopularity);
+                    financialProductService.updateByWrapper(financialProduct,queryWrapper);
                 }catch (Exception e){
                     throw e;
                 }
@@ -973,6 +988,13 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
                     historicalOperation.setHoldAssets(holdingCost);
 
                     historicalOperationService.insert(historicalOperation);
+
+                    /** 在原有人气基础上 +1 */
+                    int popularity=financialProduct.getPopularity();
+                    int newPopularity=popularity+1;
+                    financialProduct.setPopularity(newPopularity);
+                    System.out.println(newPopularity);
+                    financialProductService.updateByWrapper(financialProduct,queryWrapper);
                 }catch (Exception e){
                     throw e;
                 }

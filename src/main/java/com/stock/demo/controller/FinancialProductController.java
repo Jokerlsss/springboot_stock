@@ -4,6 +4,9 @@ import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.stock.demo.mapper.FundEarningsMapper;
+import com.stock.demo.mapper.GoldEarningsMapper;
+import com.stock.demo.mapper.StockEarningsMapper;
 import com.stock.demo.pojo.*;
 import com.stock.demo.service.*;
 import com.stock.demo.util.UpdateEarn;
@@ -30,6 +33,15 @@ public class FinancialProductController implements BaseController<FinancialProdu
 
     @Autowired
     FinancialProductService financialProductService;
+
+    @Autowired
+    FundEarningsMapper fundEarningsMapper;
+
+    @Autowired
+    StockEarningsMapper stockEarningsMapper;
+
+    @Autowired
+    GoldEarningsMapper goldEarningsMapper;
 
     @Autowired
     FundService fundService;
@@ -434,21 +446,37 @@ public class FinancialProductController implements BaseController<FinancialProdu
             fundQueryWrapper.eq("productCode",productCode);
             Fund fund=fundService.selectByWrapperReturnBean(fundQueryWrapper);
             map.put("fund",fund);
+
+            /** 查询最新涨跌幅（productType,productCode） */
+            float dailyChange=fundEarningsMapper.selectLastOneEarnings(productCode).getDailyChange();
+            map.put("dailyChange",dailyChange);
         }else if(financialProduct.getProductType().equals("黄金")){
             QueryWrapper<Gold> goldQueryWrapper=new QueryWrapper<>();
             goldQueryWrapper.eq("productCode",productCode);
             Gold gold=goldService.selectByWrapperReturnBean(goldQueryWrapper);
             map.put("gold",gold);
+
+            /** 查询最新涨跌幅（productType,productCode） */
+            float dailyChange=goldEarningsMapper.selectLastOneEarnings(productCode).getDailyChange();
+            map.put("dailyChange",dailyChange);
         }else if(financialProduct.getProductType().equals("定期")){
             QueryWrapper<Regular> regularQueryWrapper=new QueryWrapper<>();
             regularQueryWrapper.eq("productCode",productCode);
             Regular regular=regularService.selectByWrapperReturnBean(regularQueryWrapper);
             map.put("regular",regular);
+
+            // TODO 加上定期的涨跌幅
+            /** 查询最新涨跌幅（productType,productCode） */
+            map.put("dailyChange",0);
         }else if(financialProduct.getProductType().equals("股票")){
             QueryWrapper<Stock> stockQueryWrapper=new QueryWrapper<>();
             stockQueryWrapper.eq("productCode",productCode);
             Stock stock=stockService.selectByWrapperReturnBean(stockQueryWrapper);
             map.put("stock",stock);
+
+            /** 查询最新涨跌幅（productType,productCode） */
+            float dailyChange=stockEarningsMapper.selectLastStockEarnings(productCode).getDailyChange();
+            map.put("dailyChange",dailyChange);
         }
         return map;
     }

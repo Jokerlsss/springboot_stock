@@ -33,6 +33,7 @@ public class HistoryEarningsController implements BaseController<HistoryEarnings
     public List<HistoryEarnings> listByWrapper(@RequestParam(value = "userid", required=false ) Long userid){
         QueryWrapper<HistoryEarnings> historyEarningsQueryWrapper=new QueryWrapper<>();
         historyEarningsQueryWrapper.eq("userid",userid);
+        historyEarningsQueryWrapper.orderByDesc("earningsdate");
         List<HistoryEarnings> historyEarningsList=historyEarningsService.listByWrapper(historyEarningsQueryWrapper);
         return historyEarningsList;
     }

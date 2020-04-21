@@ -1,6 +1,7 @@
 package com.stock.demo.serviceImpl;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.stock.demo.mapper.PersonalCollectionMapper;
 import com.stock.demo.pojo.PersonalCollection;
@@ -66,5 +67,20 @@ public class PersonalCollectionServiceImpl implements PersonalCollectionService 
     @Override
     public IPage<PersonalCollection> pagerByName(Wrapper<PersonalCollection> wrapper, Long pageNum, Long pageSize) {
         return null;
+    }
+
+    @Override
+    public List<PersonalCollection> listByWrapper(QueryWrapper<PersonalCollection> wrapper) {
+        return personalCollectionMapper.selectList(wrapper);
+    }
+
+    /**
+     * 删除收藏
+     * @param wrapper
+     * @return
+     */
+    @Override
+    public int deleteByWrapper(QueryWrapper<PersonalCollection> wrapper) {
+        return personalCollectionMapper.delete(wrapper);
     }
 }
