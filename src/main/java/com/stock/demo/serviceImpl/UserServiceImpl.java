@@ -1,6 +1,7 @@
 package com.stock.demo.serviceImpl;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.stock.demo.mapper.UserMapper;
 import com.stock.demo.pojo.User;
@@ -70,5 +71,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<User> selectFromMoreTable() {
         return userMapper.selectFromMoreTable();
+    }
+
+    @Override
+    public int updateByWrapper(User bean, QueryWrapper<User> queryWrapper) {
+        return userMapper.update(bean,queryWrapper);
     }
 }

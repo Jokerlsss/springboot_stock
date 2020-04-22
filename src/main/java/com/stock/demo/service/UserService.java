@@ -1,5 +1,6 @@
 package com.stock.demo.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.stock.demo.pojo.User;
 import org.springframework.stereotype.Service;
 
@@ -16,4 +17,6 @@ import java.util.List;
 public interface UserService extends BaseService<User>{
     // TODO:删除该多表测试
     public List<User> selectFromMoreTable();
+    /** 根据 wrapper 更新 */
+    public int updateByWrapper(User bean, QueryWrapper<User> queryWrapper);
 }

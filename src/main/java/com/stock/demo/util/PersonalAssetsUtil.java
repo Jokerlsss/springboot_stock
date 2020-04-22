@@ -47,6 +47,32 @@ public class PersonalAssetsUtil {
     @Autowired
     private GoldEarningsMapper goldEarningsMapper;
 
+    public String getCharacter(int totalGrade){
+        /**
+         * 总分：38分
+         * ------------
+         * 保守：8-14
+         * 谨慎：15-20
+         * 稳健：21-28
+         * 积极：29-34
+         * 激进：35-38
+         * ------------
+         */
+        if(totalGrade>=8 && totalGrade<=14){
+            return "保守";
+        }else if(totalGrade>=15 && totalGrade<=20){
+            return "谨慎";
+        }else if(totalGrade>=21 && totalGrade<=28){
+            return "稳健";
+        }else if(totalGrade>=29 && totalGrade<=34){
+            return "积极";
+        }else if(totalGrade>=35 && totalGrade<=38){
+            return "激进";
+        }else{
+            return null;
+        }
+    }
+
     /**
      * 返回对应日期净值
      * @param productType 资产类型
