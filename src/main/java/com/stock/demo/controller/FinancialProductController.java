@@ -70,6 +70,110 @@ public class FinancialProductController implements BaseController<FinancialProdu
     @Autowired
     DateOprate dateOprate;
 
+    @GetMapping("selectCompare")
+    public Map<String,Object> selectCompare(@RequestParam(value = "productCode") String productCode) throws ParseException {
+        /** 声明 resultMap */
+        Map<String,Object> resultMap=new HashMap<String,Object>(10);
+
+        /** 查询 financialProduct （return bean）: productCode */
+        QueryWrapper<FinancialProduct> financialProductQueryWrapper=new QueryWrapper<>();
+        financialProductQueryWrapper.eq("productCode",productCode);
+        FinancialProduct financialProduct=financialProductService.selectByWrapperReturnBean(financialProductQueryWrapper);
+
+        String productType=financialProduct.getProductType();
+        int popularity=financialProduct.getPopularity();
+//        Date dateOfEstablishment=financialProduct.getDateOfEstablishment();
+        String riskType=financialProduct.getRiskType();
+
+        /** 日期格式 -> String标准格式 */
+        SimpleDateFormat df=new SimpleDateFormat("yyyy-MM-dd");
+        Date oldDate=df.parse(df.format(financialProduct.getDateOfEstablishment()));
+        Date newDate=df.parse(df.format(new Date()));
+
+        /** 计算日期差值 */
+        Long dayOfLess=dateOprate.dayOfLessDate(oldDate,newDate);
+
+        /** 声明：dayEarn/oneMonthEarn/threeMonthEarn/sixMonthEarn/oneYearEarn/threeYearEarn */
+        float dayEarn=0;
+        float oneMonthEarn=0;
+        float threeMonthEarn=0;
+        float sixMonthEarn=0;
+        float oneYearEarn=0;
+        float threeYearEarn=0;
+
+        /** 声明：天数对应的日期（以月份最大值来计算，保证无空值） */
+        int oneMonth=31;
+        // 三月最大值：31+31+30 = 62
+        int threeMonth=62;
+        // 六月最大值：31+30+31+30+31+30 = 183
+        int sixMonth=183;
+        int oneYear=366;
+        // 三年最大值：366+365+365 = 1096
+        int threeYear=1096;
+
+        /** 当资产发布 1 个月内的话，显示无任何收益率 */
+        if(dayOfLess>oneMonth && dayOfLess<=threeMonth){
+            oneMonthEarn=updateEarn.getEarnRate(productCode,productType,1);
+        }else if(dayOfLess>threeMonth && dayOfLess<=sixMonth){
+            oneMonthEarn=updateEarn.getEarnRate(productCode,productType,1);
+            threeMonthEarn=updateEarn.getEarnRate(productCode,productType,3);
+        }else if(dayOfLess>sixMonth && dayOfLess<=oneYear){
+            oneMonthEarn=updateEarn.getEarnRate(productCode,productType,1);
+            threeMonthEarn=updateEarn.getEarnRate(productCode,productType,3);
+            sixMonthEarn=updateEarn.getEarnRate(productCode,productType,6);
+        }else if(dayOfLess>oneYear && dayOfLess<=threeYear){
+            oneMonthEarn=updateEarn.getEarnRate(productCode,productType,1);
+            threeMonthEarn=updateEarn.getEarnRate(productCode,productType,3);
+            sixMonthEarn=updateEarn.getEarnRate(productCode,productType,6);
+            oneYearEarn=updateEarn.getEarnRate(productCode,productType,12);
+        }else if(dayOfLess>threeYear){
+            oneMonthEarn=updateEarn.getEarnRate(productCode,productType,1);
+            threeMonthEarn=updateEarn.getEarnRate(productCode,productType,3);
+            sixMonthEarn=updateEarn.getEarnRate(productCode,productType,6);
+            oneYearEarn=updateEarn.getEarnRate(productCode,productType,12);
+            threeYearEarn=updateEarn.getEarnRate(productCode,productType,36);
+        }
+
+
+        resultMap.put("productName",financialProduct.getProductName());
+        resultMap.put("productType",financialProduct.getProductType());
+//        resultMap.put("dayEarn",dayEarn);
+        resultMap.put("oneMonthEarn",oneMonthEarn);
+        resultMap.put("threeMonthEarn",threeMonthEarn);
+        resultMap.put("sixMonthEarn",sixMonthEarn);
+        resultMap.put("oneYearEarn",oneYearEarn);
+        resultMap.put("threeYearEarn",threeYearEarn);
+        resultMap.put("riskType",riskType);
+        resultMap.put("dateOfEstablishment",oldDate);
+        resultMap.put("popularity",popularity);
+
+        /**
+         * 声明 resultMap
+         *
+         * 查询 financialProduct （return bean）: productCode
+         * 声明 dayEarn/oneMonthEarn/threeMonthEarn/sixMonthEarn/oneYearEarn/threeYearEarn
+         *
+         * 调用日期差值方法，分别判断各个时间段是否存在收益
+         *
+         * 对不存在收益的时间段，赋值为 "--"
+         * （对存在收益的时间段区间进行计算）X年收益率 = 计算X年收益率的方法：updateEarn.getEarnRate（productCode,productType,12）
+         *
+         * 对收益进行赋值
+         *
+         * reslutMap.put("productName")
+         * reslutMap.put("productType")
+         * reslutMap.put("dayEarn")
+         * reslutMap.put("oneMonthEarn")
+         * reslutMap.put("threeMonthEarn")
+         * reslutMap.put("sixMonthEarn")
+         * reslutMap.put("oneYearEarn")
+         * reslutMap.put("threeYearEarn")
+         *
+         * return reslutMap
+         */
+        return resultMap;
+    }
+
     /**
      * 资产推荐（股票、基金、黄金）
      * @param productType
