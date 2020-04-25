@@ -36,11 +36,11 @@ public class User implements UserDetails {
     private String inertmentCharacter;
 
     // 非表字段注解
-    @Transient
-    private String job;
+//    @Transient
+//    private String job;
 
-    @Transient
-    private Float money;
+//    @Transient
+//    private Float money;
 
     //    实现了UserDetails接口之后生成的方法
     @Override

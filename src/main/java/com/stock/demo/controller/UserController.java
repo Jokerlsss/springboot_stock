@@ -24,7 +24,7 @@ import java.util.List;
 public class UserController implements BaseController<User>{
 
     @Autowired
-private UserService userService;
+    private UserService userService;
 
     @Override
     @GetMapping("list")

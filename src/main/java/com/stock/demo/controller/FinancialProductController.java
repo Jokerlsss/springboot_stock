@@ -70,6 +70,49 @@ public class FinancialProductController implements BaseController<FinancialProdu
     @Autowired
     DateOprate dateOprate;
 
+    /**
+     * 在市场中，搜索项目
+     * @param productCode
+     * @param productName
+     * @param productType
+     * @return 搜索条件为空时，返回值为 []；否则返回实体类
+     */
+    @GetMapping("/searchMarketProject")
+    public List<FinancialProduct> searchMarketProject(@RequestParam(value = "productCode",required = false) String productCode,
+                                                @RequestParam(value = "productName",required = false) String productName,
+                                                      @RequestParam(value = "productType",required = false) String productType){
+        System.out.println("productCode:"+productCode);
+        System.out.println("productType:"+productType);
+        System.out.println("productName:"+productName);
+        // 从前端传过来的参数只能 productCode 或 productName 二选一
+        // 当 productCode 不为空时，则判断为通过代码搜索
+        // 当 productName 不为空时，则判断为通过名称搜索
+        if(!productCode.equals("") && productName.equals("")){
+            QueryWrapper<FinancialProduct> queryWrapper=new QueryWrapper<>();
+            queryWrapper.like("productCode",productCode);
+            queryWrapper.eq("productType",productType);
+            return financialProductService.selectByWrapperReturnList(queryWrapper);
+        }else if(productCode.equals("") && !productName.equals("")){
+            QueryWrapper<FinancialProduct> queryWrapper=new QueryWrapper<>();
+            queryWrapper.like("productName",productName);
+            queryWrapper.eq("productType",productType);
+            return financialProductService.selectByWrapperReturnList(queryWrapper);
+        }else if(productCode.equals("")&&productName.equals("")){
+            /** 当搜索条件为空时，搜索全部 */
+            QueryWrapper<FinancialProduct> queryWrapper=new QueryWrapper<>();
+            queryWrapper.eq("productType",productType);
+            return financialProductService.selectByWrapperReturnList(queryWrapper);
+        }else{
+            return null;
+        }
+    }
+
+    /**
+     * 对比项目（查找项目详情、收益）
+     * @param productCode
+     * @return
+     * @throws ParseException
+     */
     @GetMapping("selectCompare")
     public Map<String,Object> selectCompare(@RequestParam(value = "productCode") String productCode) throws ParseException {
         /** 声明 resultMap */
@@ -95,11 +138,11 @@ public class FinancialProductController implements BaseController<FinancialProdu
 
         /** 声明：dayEarn/oneMonthEarn/threeMonthEarn/sixMonthEarn/oneYearEarn/threeYearEarn */
         float dayEarn=0;
-        float oneMonthEarn=0;
-        float threeMonthEarn=0;
-        float sixMonthEarn=0;
-        float oneYearEarn=0;
-        float threeYearEarn=0;
+        String oneMonthEarn=null;
+        String threeMonthEarn=null;
+        String sixMonthEarn=null;
+        String oneYearEarn=null;
+        String threeYearEarn=null;
 
         /** 声明：天数对应的日期（以月份最大值来计算，保证无空值） */
         int oneMonth=31;
@@ -113,27 +156,26 @@ public class FinancialProductController implements BaseController<FinancialProdu
 
         /** 当资产发布 1 个月内的话，显示无任何收益率 */
         if(dayOfLess>oneMonth && dayOfLess<=threeMonth){
-            oneMonthEarn=updateEarn.getEarnRate(productCode,productType,1);
+            oneMonthEarn=Float.toString(updateEarn.getEarnRate(productCode,productType,1));
         }else if(dayOfLess>threeMonth && dayOfLess<=sixMonth){
-            oneMonthEarn=updateEarn.getEarnRate(productCode,productType,1);
-            threeMonthEarn=updateEarn.getEarnRate(productCode,productType,3);
+            oneMonthEarn=Float.toString(updateEarn.getEarnRate(productCode,productType,1));
+            threeMonthEarn=Float.toString(updateEarn.getEarnRate(productCode,productType,3));
         }else if(dayOfLess>sixMonth && dayOfLess<=oneYear){
-            oneMonthEarn=updateEarn.getEarnRate(productCode,productType,1);
-            threeMonthEarn=updateEarn.getEarnRate(productCode,productType,3);
-            sixMonthEarn=updateEarn.getEarnRate(productCode,productType,6);
+            oneMonthEarn=Float.toString(updateEarn.getEarnRate(productCode,productType,1));
+            threeMonthEarn=Float.toString(updateEarn.getEarnRate(productCode,productType,3));
+            sixMonthEarn=Float.toString(updateEarn.getEarnRate(productCode,productType,6));
         }else if(dayOfLess>oneYear && dayOfLess<=threeYear){
-            oneMonthEarn=updateEarn.getEarnRate(productCode,productType,1);
-            threeMonthEarn=updateEarn.getEarnRate(productCode,productType,3);
-            sixMonthEarn=updateEarn.getEarnRate(productCode,productType,6);
-            oneYearEarn=updateEarn.getEarnRate(productCode,productType,12);
+            oneMonthEarn=Float.toString(updateEarn.getEarnRate(productCode,productType,1));
+            threeMonthEarn=Float.toString(updateEarn.getEarnRate(productCode,productType,3));
+            sixMonthEarn=Float.toString(updateEarn.getEarnRate(productCode,productType,6));
+            oneYearEarn=Float.toString(updateEarn.getEarnRate(productCode,productType,12));
         }else if(dayOfLess>threeYear){
-            oneMonthEarn=updateEarn.getEarnRate(productCode,productType,1);
-            threeMonthEarn=updateEarn.getEarnRate(productCode,productType,3);
-            sixMonthEarn=updateEarn.getEarnRate(productCode,productType,6);
-            oneYearEarn=updateEarn.getEarnRate(productCode,productType,12);
-            threeYearEarn=updateEarn.getEarnRate(productCode,productType,36);
+            oneMonthEarn=Float.toString(updateEarn.getEarnRate(productCode,productType,1));
+            threeMonthEarn=Float.toString(updateEarn.getEarnRate(productCode,productType,3));
+            sixMonthEarn=Float.toString(updateEarn.getEarnRate(productCode,productType,6));
+            oneYearEarn=Float.toString(updateEarn.getEarnRate(productCode,productType,12));
+            threeYearEarn=Float.toString(updateEarn.getEarnRate(productCode,productType,36));
         }
-
 
         resultMap.put("productName",financialProduct.getProductName());
         resultMap.put("productType",financialProduct.getProductType());
@@ -147,30 +189,6 @@ public class FinancialProductController implements BaseController<FinancialProdu
         resultMap.put("dateOfEstablishment",oldDate);
         resultMap.put("popularity",popularity);
 
-        /**
-         * 声明 resultMap
-         *
-         * 查询 financialProduct （return bean）: productCode
-         * 声明 dayEarn/oneMonthEarn/threeMonthEarn/sixMonthEarn/oneYearEarn/threeYearEarn
-         *
-         * 调用日期差值方法，分别判断各个时间段是否存在收益
-         *
-         * 对不存在收益的时间段，赋值为 "--"
-         * （对存在收益的时间段区间进行计算）X年收益率 = 计算X年收益率的方法：updateEarn.getEarnRate（productCode,productType,12）
-         *
-         * 对收益进行赋值
-         *
-         * reslutMap.put("productName")
-         * reslutMap.put("productType")
-         * reslutMap.put("dayEarn")
-         * reslutMap.put("oneMonthEarn")
-         * reslutMap.put("threeMonthEarn")
-         * reslutMap.put("sixMonthEarn")
-         * reslutMap.put("oneYearEarn")
-         * reslutMap.put("threeYearEarn")
-         *
-         * return reslutMap
-         */
         return resultMap;
     }
 
