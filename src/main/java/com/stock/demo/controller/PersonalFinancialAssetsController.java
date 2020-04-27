@@ -8,6 +8,7 @@ import com.stock.demo.mapper.PersonalFinancialAssetsMapper;
 import com.stock.demo.pojo.*;
 import com.stock.demo.service.*;
 import com.stock.demo.util.PersonalAssetsUtil;
+import com.stock.demo.util.SuggestionGet;
 import com.stock.demo.util.UpdateEarn;
 import org.springframework.beans.AbstractNestablePropertyAccessor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,6 +59,12 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
     @Autowired
     PersonalAssetsUtil personalAssetsUtil;
 
+    @Autowired
+    SuggestionGet suggestionGet;
+
+    @Autowired
+    UserService userService;
+
     @GetMapping("getAceOfAssets")
     public List getAceOfAssets(@RequestParam(value="userid",required = false) Long userid){
         /** 分别存放累计收益 & 持有收益 */
@@ -85,6 +92,7 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
     }
 
     /**
+     * >> 按照资产类型划分
      * 资产占比（查询个人拥有各资产总和）
      * @param userid
      * @return
@@ -153,6 +161,132 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
             assetsList.add(map);
         }
         return assetsList;
+    }
+
+    /**
+     * >> 按照资产风险划分
+     * 资产占比（查询个人拥有各资产总和）
+     * 生成投资建议
+     * @param userid
+     * @return
+     */
+    @GetMapping("getAssetsFromRisk")
+    public Map<String,Object> getAssetsFromRisk(@RequestParam(value="userid",required = false) Long userid){
+        /** 声明最终结果集 */
+        Map<String,Object> resultMap=new HashMap<String,Object>(10);
+
+        DecimalFormat dfOne =new DecimalFormat("#.0");
+        DecimalFormat dfTwo =new DecimalFormat("#.00");
+
+        /** 查询总资产 */
+        float sumOfAssets=personalFinancialAssetsMapper.selectSumOfAssets(userid);
+
+        /** 声明各风险资产金额 */
+        float lowAssets=0;
+        float middleLowAssets=0;
+        float middleAssets=0;
+        float middleHighAssets=0;
+
+        /** 声明：最终结果列表 */
+        List assetsList=new ArrayList();
+
+        /** 查该用户拥有的资产 */
+        QueryWrapper<PersonalFinancialAssets> personalFinancialAssetsQueryWrapper=new QueryWrapper<>();
+        personalFinancialAssetsQueryWrapper.eq("userid",userid);
+        personalFinancialAssetsQueryWrapper.eq("status",0);
+        List<PersonalFinancialAssets> personalFinancialAssetsList=personalFinancialAssetsService.selectByWrapperReturnList(personalFinancialAssetsQueryWrapper);
+
+        for(int i=0;i<personalFinancialAssetsList.size();i++){
+            /** 根据 productCode，遍历查询 financialProduct 中的 riskType */
+            String productCode=personalFinancialAssetsList.get(i).getProductCode();
+
+            QueryWrapper<FinancialProduct> financialProductQueryWrapper=new QueryWrapper<>();
+            financialProductQueryWrapper.eq("productCode",productCode);
+            FinancialProduct financialProduct=financialProductService.selectByWrapperReturnBean(financialProductQueryWrapper);
+
+            /** 根据风险类型，进行资产累加 */
+            if(financialProduct.getRiskType().equals("低风险")){
+                lowAssets=personalFinancialAssetsList.get(i).getHoldAssets()+lowAssets;
+            }else if(financialProduct.getRiskType().equals("中低风险")){
+                middleLowAssets=personalFinancialAssetsList.get(i).getHoldAssets()+middleLowAssets;
+            }else if(financialProduct.getRiskType().equals("中风险")){
+                middleAssets=personalFinancialAssetsList.get(i).getHoldAssets()+middleAssets;
+            }else if(financialProduct.getRiskType().equals("中高风险")){
+                middleHighAssets=personalFinancialAssetsList.get(i).getHoldAssets()+middleHighAssets;
+            }
+        }
+
+        /** 生成占比值并返回 List */
+        // typeQuantity：4种风险类型
+        int typeQuantity=4;
+
+        /** 声明：四个风险占比数值，用于生成建议用 */
+        float lowProportion=0;
+        float middleLowProportion=0;
+        float middleProportion=0;
+        float middleHighProportion=0;
+
+        /** get：user 的 investmentCharacter：投资性格，用于生成建议用 */
+        User user=userService.load(userid);
+        String investmentCharacter=user.getInertmentCharacter();
+
+        for(int i=0;i<typeQuantity;i++){
+            Map<String,Object> map = new HashMap<String,Object>(10);
+            /**
+             * 返回格式
+             projectItem: '低风险',
+             assetItem: '51324',
+             progressItem: '51%',（保留一位小数，转换为 String，增加百分号 %）
+             proportionItem: '51%'（保留一位小数）
+             */
+            if(i==0){
+                lowProportion=Float.parseFloat(dfOne.format(lowAssets/sumOfAssets*100));
+                /** 低风险资产 */
+                String proportionItem=dfOne.format(lowAssets/sumOfAssets*100)+"%";
+                map.put("projectItem","低级");
+                /** 保留两位小数，为 0 时会显示为 .00，故进行格式转换 */
+                map.put("assetItem",dfTwo.format(lowAssets).equals(".00")?"0":dfTwo.format(lowAssets));
+                map.put("progressItem",proportionItem);
+                map.put("proportionItem",proportionItem);
+            }else if(i==1){
+                // 占比数值
+                middleLowProportion=Float.parseFloat(dfOne.format(middleLowAssets/sumOfAssets*100));
+                /** 中低风险资产 */
+                // 占比数值 + %
+                String proportionItem=dfOne.format(middleLowAssets/sumOfAssets*100)+"%";
+                map.put("projectItem","中低");
+                map.put("assetItem",dfTwo.format(middleLowAssets).equals(".00")?"0":dfTwo.format(middleLowAssets));
+                map.put("progressItem",proportionItem);
+                map.put("proportionItem",proportionItem);
+            }else if(i==2){
+                middleProportion=Float.parseFloat(dfOne.format(middleAssets/sumOfAssets*100));
+                /** 中风险资产 */
+                String proportionItem=dfOne.format(middleAssets/sumOfAssets*100)+"%";
+                map.put("projectItem","中等");
+                map.put("assetItem",dfTwo.format(middleAssets).equals(".00")?"0":dfTwo.format(middleAssets));
+                map.put("progressItem",proportionItem);
+                map.put("proportionItem",proportionItem);
+            }else if(i==3){
+                middleHighProportion=Float.parseFloat(dfOne.format(middleHighAssets/sumOfAssets*100));
+                /** 中高资产 */
+                String proportionItem=dfOne.format(middleHighAssets/sumOfAssets*100)+"%";
+                map.put("projectItem","中高");
+                map.put("assetItem",dfTwo.format(middleHighAssets).equals(".00")?"0":dfTwo.format(middleHighAssets));
+                map.put("progressItem",proportionItem);
+                map.put("proportionItem",proportionItem);
+            }
+            assetsList.add(map);
+        }
+
+        /** 生成投资建议 */
+        Map<String,Object> suggestionMap=suggestionGet.suggestionGet(investmentCharacter,lowProportion,middleLowProportion,middleProportion,middleHighProportion);
+
+        /** 将 List 和 suggestionMap 存进 resultMap 中 并返回 */
+        resultMap.put("assetsList",assetsList);
+        resultMap.put("suggestion",suggestionMap);
+
+        System.out.println("resultMap:"+resultMap);
+        return resultMap;
     }
 
     /**
