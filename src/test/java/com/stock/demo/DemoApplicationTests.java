@@ -249,7 +249,7 @@ class DemoApplicationTests {
     public void insertUser(){
         User user=new User();
         user.setUserName("Jokerls");
-        user.setInertmentCharacter("稳健");
+        user.setInvestmentCharacter("保守");
 
         BCryptPasswordEncoder encoder=new BCryptPasswordEncoder();
         user.setUserPassword(encoder.encode("123"));

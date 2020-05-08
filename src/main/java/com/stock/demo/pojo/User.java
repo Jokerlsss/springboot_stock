@@ -33,7 +33,7 @@ public class User implements UserDetails {
     private String userPassword;
 
     @TableField("investmentCharacter")
-    private String inertmentCharacter;
+    private String investmentCharacter;
 
     // 非表字段注解
 //    @Transient

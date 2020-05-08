@@ -16,7 +16,7 @@ import java.util.List;
  */
 @Mapper
 public interface UserMapper extends BaseMapper<User> {
-    @Select("select * from user where username=#{name}")
+    @Select("select * from user where userName=#{name}")
     public User selectByName(String name);
 
     // TODO:删除该测试代码（用户 & 职位 多表连接）

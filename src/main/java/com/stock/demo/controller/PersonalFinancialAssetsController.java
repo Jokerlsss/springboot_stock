@@ -228,7 +228,7 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
 
         /** get：user 的 investmentCharacter：投资性格，用于生成建议用 */
         User user=userService.load(userid);
-        String investmentCharacter=user.getInertmentCharacter();
+        String investmentCharacter=user.getInvestmentCharacter();
 
         for(int i=0;i<typeQuantity;i++){
             Map<String,Object> map = new HashMap<String,Object>(10);

@@ -79,7 +79,7 @@ public class AnswerController implements BaseController<Answer> {
 
         /** 将投资性格更新进 user 表中 */
         User user=new User();
-        user.setInertmentCharacter(character);
+        user.setInvestmentCharacter(character);
 
         QueryWrapper<User> userQueryWrapper=new QueryWrapper<>();
         userQueryWrapper.eq("userID",userid);

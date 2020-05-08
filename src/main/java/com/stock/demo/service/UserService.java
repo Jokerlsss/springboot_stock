@@ -19,4 +19,10 @@ public interface UserService extends BaseService<User>{
     public List<User> selectFromMoreTable();
     /** 根据 wrapper 更新 */
     public int updateByWrapper(User bean, QueryWrapper<User> queryWrapper);
+
+    /** 注册 */
+    public int registered(String userName,String userPassword);
+
+    /** 查询该用户是否存在 */
+    public int isExist(String userName);
 }

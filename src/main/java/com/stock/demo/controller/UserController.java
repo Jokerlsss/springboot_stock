@@ -2,13 +2,12 @@ package com.stock.demo.controller;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.stock.demo.mapper.UserMapper;
 import com.stock.demo.pojo.User;
 import com.stock.demo.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -25,6 +24,68 @@ public class UserController implements BaseController<User>{
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private UserMapper userMapper;
+
+    @GetMapping("login")
+    public int login(@RequestParam(value="userName",required = false) String userName,
+                     @RequestParam(value="userPassword",required = false) String userPassword){
+        int flag=0;
+        int loginSuccess=1;
+        int loginFail=2;
+
+        int isExist=userService.isExist(userName);
+        if(isExist==1){
+            // 登录
+            /** 查出数据库中对应该昵称的密码 */
+            User user=userService.loadByName(userName);
+
+            BCryptPasswordEncoder encoder=new BCryptPasswordEncoder();
+            String realPassword=user.getUserPassword();
+
+            /** 将数据库中的密码进行解密并匹配 */
+            boolean isLogin=encoder.matches(userPassword,realPassword);
+
+            if(isLogin){
+                // 登录成功
+                flag=loginSuccess;
+            }else{
+                // 登录失败
+                flag=loginFail;
+            }
+        }else{
+            // 返回错误码，提示“是否注册并登录”-用户同意后再进行注册操作
+            flag=0;
+        }
+        return flag;
+    }
+
+    /**
+     * 注册
+     * @param userName
+     * @param userPassword
+     * @return
+     */
+    @GetMapping("registered")
+    public int registered(@RequestParam(value="userName",required = false) String userName,
+                          @RequestParam(value="userPassword",required = false) String userPassword){
+        int flag=0;
+        try{
+            User user=new User();
+            user.setUserName(userName);
+            user.setInvestmentCharacter("保守");
+
+            BCryptPasswordEncoder encoder=new BCryptPasswordEncoder();
+            user.setUserPassword(encoder.encode(userPassword));
+            userMapper.insert(user);
+            flag=1;
+        }catch (Exception e){
+            throw e;
+        }
+        return flag;
+    }
+
 
     @Override
     @GetMapping("list")
@@ -70,9 +131,11 @@ public class UserController implements BaseController<User>{
         return null;
     }
 
+
     @Override
-    public User loadByName(String name) {
-        return null;
+    @GetMapping("loadUserByName")
+    public User loadByName(@RequestParam(value="userName",required = false) String userName) {
+        return userService.loadByName(userName);
     }
 
     @Override
