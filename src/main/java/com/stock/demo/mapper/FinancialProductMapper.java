@@ -16,6 +16,7 @@ import java.util.List;
  */
 @Mapper
 public interface FinancialProductMapper extends BaseMapper<FinancialProduct> {
+    /** 查询股票基本信息 */
     @Select("select a.*,b.dateOfEstablishment,b.issuePrice from financialproduct a,stock b where a.productCode=b.productCode")
     public List<FinancialProduct> selectStockBaseInfo();
 }

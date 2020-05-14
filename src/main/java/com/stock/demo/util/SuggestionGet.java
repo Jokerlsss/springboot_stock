@@ -20,6 +20,41 @@ public class SuggestionGet {
     private SuggestionGet suggestionGet;
 
     /**
+     * 历史操作月报的建议
+     * @param countOfOperate
+     * @return
+     */
+    public String historyOperateReport(int countOfOperate){
+        String report="";
+
+        if(countOfOperate<15){
+            report="本月中，您的操作次数处于正常范围内，继续保持以降低购入时所需要花费的成本。";
+        }else if(countOfOperate>=15){
+            report="本月中，您的操作次数过于频繁，可能会造成反复操作导致的成本增加，建议减少操作次数。";
+        }
+        return report;
+    }
+
+    /**
+     * 根据月报收益分析返回总结
+     * @param countOfLoss
+     * @param countOfProfit
+     * @return
+     */
+    public String historyEarnReport(int countOfLoss,int countOfProfit){
+        String report="";
+            if(countOfLoss<countOfProfit){
+                report="总的来看，你目前拥有的资产盈利能力较强，可以考虑继续保持当前资产配比。" ;
+            }else if(countOfLoss==countOfProfit){
+                report="总的来看，你目前亏损和盈利的天数持平，可以考虑保持当前仓位，继续观望，在有低位时进行加仓。";
+            }else if(countOfLoss>countOfProfit){
+                report="总的来看，你目前拥有的资产盈利能力较差，可以考虑继续保持定期投入，平衡持仓成本，争取在高位时获利。";
+            }
+
+        return report;
+    }
+
+    /**
      * 根据用户的投资性格，返回建议
      * @param character
      * @param low

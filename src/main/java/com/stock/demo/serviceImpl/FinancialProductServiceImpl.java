@@ -1,6 +1,7 @@
 package com.stock.demo.serviceImpl;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.stock.demo.mapper.FinancialProductMapper;
 import com.stock.demo.pojo.FinancialProduct;
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
+import javax.print.attribute.standard.Finishings;
 import java.util.List;
 
 /**
@@ -103,5 +105,15 @@ public class FinancialProductServiceImpl implements FinancialProductService {
     @Override
     public int updateByWrapper(FinancialProduct bean, Wrapper<FinancialProduct> wrapper) {
         return financialProductMapper.update(bean,wrapper);
+    }
+
+    /**
+     * isExist：后台新增时查重
+     * @param wrapper
+     * @return
+     */
+    @Override
+    public int selectCount(QueryWrapper<FinancialProduct> wrapper) {
+        return financialProductMapper.selectCount(wrapper);
     }
 }

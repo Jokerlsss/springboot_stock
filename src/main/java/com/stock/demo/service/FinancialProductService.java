@@ -1,6 +1,7 @@
 package com.stock.demo.service;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.stock.demo.pojo.FinancialProduct;
 import org.springframework.stereotype.Service;
@@ -21,4 +22,5 @@ public interface FinancialProductService extends BaseService<FinancialProduct>{
     public List<FinancialProduct> selectByWrapperReturnList(Wrapper<FinancialProduct> wrapper);
     public FinancialProduct selectByWrapperReturnBean(Wrapper<FinancialProduct> wrapper);
     public int updateByWrapper(FinancialProduct bean,Wrapper<FinancialProduct> wrapper);
+    public int selectCount(QueryWrapper<FinancialProduct> wrapper);
 }

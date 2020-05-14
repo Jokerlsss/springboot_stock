@@ -65,6 +65,33 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
     @Autowired
     UserService userService;
 
+    /**
+     * 查询用户拥有的资产、最新收益、持有收益总和
+     * @param userid
+     * @return
+     */
+    @GetMapping("getAssetsInfo")
+    public Map<String,Object> getAssetsInfo(@RequestParam(value="userid",required = false) Long userid){
+        Map<String,Object> resultMap = new HashMap<String,Object>(10);
+
+        /** 获取总资产、总最新收益、总持有收益 */
+        float allAssets=personalFinancialAssetsMapper.selectAllAssets(userid);
+        float dayEarn=personalFinancialAssetsMapper.selectDayEarn(userid);
+        float holdEarn=personalFinancialAssetsMapper.selectHoldEarn(userid);
+
+        resultMap.put("allAssets",allAssets);
+        resultMap.put("dayEarn",dayEarn);
+        resultMap.put("holdEarn",holdEarn);
+
+        return resultMap;
+    }
+
+
+    /**
+     * 获取王牌资产
+     * @param userid
+     * @return
+     */
     @GetMapping("getAceOfAssets")
     public List getAceOfAssets(@RequestParam(value="userid",required = false) Long userid){
         /** 分别存放累计收益 & 持有收益 */

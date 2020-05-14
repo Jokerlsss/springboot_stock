@@ -65,4 +65,28 @@ public interface PersonalFinancialAssetsMapper extends BaseMapper<PersonalFinanc
      */
     @Select("select IFNULL(sum(dayEarn) ,0) from personalfinancialassets where userid=#{userid} and status=0")
     public float selectTotalDayEarn(Long userid);
+
+    /**
+     * 查询个人拥有的总资产
+     * @param userid
+     * @return
+     */
+    @Select("select sum(holdAssets) from personalfinancialassets where userid=#{userid} and STATUS=0")
+    public float selectAllAssets(Long userid);
+
+    /**
+     * 查询个人拥有的持有收益
+     * @param userid
+     * @return
+     */
+    @Select("select sum(holdEarn) from personalfinancialassets where userid=#{userid} and STATUS=0")
+    public float selectHoldEarn(Long userid);
+
+    /**
+     * 查询个人拥有的最新收益
+     * @param userid
+     * @return
+     */
+    @Select("select sum(dayEarn) from personalfinancialassets where userid=#{userid} and STATUS=0")
+    public float selectDayEarn(Long userid);
 }
