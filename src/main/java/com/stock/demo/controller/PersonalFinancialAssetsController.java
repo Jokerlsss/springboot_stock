@@ -99,21 +99,34 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
         Map<String,Object> holdEarnMap = new HashMap<String,Object>(10);
         /** get：累计收益最高的名称 & 收益 */
         List<PersonalFinancialAssets> maxTotalEarnList=personalFinancialAssetsMapper.selectMaxTotalEarn(userid);
-        totalEarnMap.put("productCode",maxTotalEarnList.get(0).getProductCode());
-        totalEarnMap.put("totalEarn",maxTotalEarnList.get(0).getTotalEarn());
-        totalEarnMap.put("productName",maxTotalEarnList.get(0).getProductName());
+        System.out.println("maxTotalEarnList.size()"+maxTotalEarnList.size());
+        if(maxTotalEarnList.size()==0){
+            totalEarnMap.put("productCode",null);
+            totalEarnMap.put("totalEarn",0);
+            totalEarnMap.put("productName","暂无数据");
+        }else{
+            totalEarnMap.put("productCode",maxTotalEarnList.get(0).getProductCode());
+            totalEarnMap.put("totalEarn",maxTotalEarnList.get(0).getTotalEarn());
+            totalEarnMap.put("productName",maxTotalEarnList.get(0).getProductName());
+        }
 
         /** get：持有收益最高的名称 & 收益 */
         List<PersonalFinancialAssets> maxHoldEarnList=personalFinancialAssetsMapper.selectMaxHoldEarn(userid);
-        holdEarnMap.put("productCode",maxHoldEarnList.get(0).getProductCode());
-        holdEarnMap.put("holdEarn",maxHoldEarnList.get(0).getHoldEarn());
-        holdEarnMap.put("productName",maxHoldEarnList.get(0).getProductName());
+
+        if(maxHoldEarnList.size()==0){
+            holdEarnMap.put("productCode",null);
+            holdEarnMap.put("holdEarn",0);
+            holdEarnMap.put("productName","暂无数据");
+        }else{
+            holdEarnMap.put("productCode",maxHoldEarnList.get(0).getProductCode());
+            holdEarnMap.put("holdEarn",maxHoldEarnList.get(0).getHoldEarn());
+            holdEarnMap.put("productName",maxHoldEarnList.get(0).getProductName());
+        }
 
         /** 王牌资产（含 累计收益 Max & 持有收益 Max） */
         List aceOfAssets=new ArrayList();
         aceOfAssets.add(totalEarnMap);
         aceOfAssets.add(holdEarnMap);
-        System.out.println("aceOfAssets:"+aceOfAssets);
 
         return aceOfAssets;
     }
@@ -131,14 +144,18 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
         float stockAssets=personalFinancialAssetsMapper.selectTypeOfAssets(userid,"股票");
         float fundAssets=personalFinancialAssetsMapper.selectTypeOfAssets(userid,"基金");
         float goldAssets=personalFinancialAssetsMapper.selectTypeOfAssets(userid,"黄金");
-        float regular=personalFinancialAssetsMapper.selectTypeOfAssets(userid,"定期");
-        float otherAssets=personalFinancialAssetsMapper.selectTypeOfAssets(userid,"其他");
+//        float regular=personalFinancialAssetsMapper.selectTypeOfAssets(userid,"定期");
+//        float otherAssets=personalFinancialAssetsMapper.selectTypeOfAssets(userid,"其他");
         /** 查询总资产 */
         float sumOfAssets=personalFinancialAssetsMapper.selectSumOfAssets(userid);
 
+        // TODO
+        System.out.println("stockAssets"+stockAssets);
+        System.out.println("sumOfAssets"+sumOfAssets);
+
         List assetsList=new ArrayList();
         // productQuantity：5种产品
-        int productQuantity=5;
+        int productQuantity=3;
 
         for(int i=0;i<productQuantity;i++){
             Map<String,Object> map = new HashMap<String,Object>(10);
@@ -150,41 +167,57 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
              proportionItem: '51%'（保留一位小数）
              */
             if(i==0){
+                String proportionItem="0%";
                 /** 股票资产 */
-                String proportionItem=dfOne.format(stockAssets/sumOfAssets*100)+"%";
+                /** 当股票资产不为 0 时，可以作为被除数 */
+                if(stockAssets!=0){
+                    proportionItem=Float.parseFloat(dfOne.format(stockAssets/sumOfAssets*100))+"%";
+                }
+
+                // todo test
+                System.out.println("proportionItem"+proportionItem);
                 map.put("projectItem","股票");
                 map.put("assetItem",stockAssets);
                 map.put("progressItem",proportionItem);
                 map.put("proportionItem",proportionItem);
             }else if(i==1){
+                String proportionItem="0%";
                 /** 基金资产 */
-                String proportionItem=dfOne.format(fundAssets/sumOfAssets*100)+"%";
+                if(fundAssets!=0){
+                    proportionItem=Float.parseFloat(dfOne.format(fundAssets/sumOfAssets*100))+"%";
+                }
+
                 map.put("projectItem","基金");
                 map.put("assetItem",fundAssets);
                 map.put("progressItem",proportionItem);
                 map.put("proportionItem",proportionItem);
             }else if(i==2){
+                String proportionItem="0%";
                 /** 黄金资产 */
-                String proportionItem=dfOne.format(goldAssets/sumOfAssets*100)+"%";
+                if(goldAssets!=0){
+                    proportionItem=Float.parseFloat(dfOne.format(goldAssets/sumOfAssets*100))+"%";
+                }
+
                 map.put("projectItem","黄金");
                 map.put("assetItem",goldAssets);
                 map.put("progressItem",proportionItem);
                 map.put("proportionItem",proportionItem);
-            }else if(i==3){
-                /** 定期资产 */
-                String proportionItem=dfOne.format(regular/sumOfAssets*100)+"%";
-                map.put("projectItem","定期");
-                map.put("assetItem",regular);
-                map.put("progressItem",proportionItem);
-                map.put("proportionItem",proportionItem);
-            }else if(i==4){
-                /** 其他资产 */
-                String proportionItem=dfOne.format(otherAssets/sumOfAssets*100)+"%";
-                map.put("projectItem","其他");
-                map.put("assetItem",otherAssets);
-                map.put("progressItem",proportionItem);
-                map.put("proportionItem",proportionItem);
             }
+//            else if(i==3){
+//                /** 定期资产 */
+//                String proportionItem=Float.parseFloat(dfOne.format(regular/sumOfAssets*100))+"%";
+//                map.put("projectItem","定期");
+//                map.put("assetItem",regular);
+//                map.put("progressItem",proportionItem);
+//                map.put("proportionItem",proportionItem);
+//            }else if(i==4){
+//                /** 其他资产 */
+//                String proportionItem=Float.parseFloat(dfOne.format(otherAssets/sumOfAssets*100))+"%";
+//                map.put("projectItem","其他");
+//                map.put("assetItem",otherAssets);
+//                map.put("progressItem",proportionItem);
+//                map.put("proportionItem",proportionItem);
+//            }
             assetsList.add(map);
         }
         return assetsList;
@@ -267,36 +300,57 @@ public class PersonalFinancialAssetsController implements BaseController<Persona
              proportionItem: '51%'（保留一位小数）
              */
             if(i==0){
-                lowProportion=Float.parseFloat(dfOne.format(lowAssets/sumOfAssets*100));
+                String proportionItem="0%";
+
+                if(lowAssets!=0){
+                    lowProportion=Float.parseFloat(dfOne.format(lowAssets/sumOfAssets*100));
+                    proportionItem=Float.parseFloat(dfOne.format(lowAssets/sumOfAssets*100))+"%";
+                }
+
                 /** 低风险资产 */
-                String proportionItem=dfOne.format(lowAssets/sumOfAssets*100)+"%";
                 map.put("projectItem","低级");
                 /** 保留两位小数，为 0 时会显示为 .00，故进行格式转换 */
                 map.put("assetItem",dfTwo.format(lowAssets).equals(".00")?"0":dfTwo.format(lowAssets));
                 map.put("progressItem",proportionItem);
                 map.put("proportionItem",proportionItem);
             }else if(i==1){
-                // 占比数值
-                middleLowProportion=Float.parseFloat(dfOne.format(middleLowAssets/sumOfAssets*100));
-                /** 中低风险资产 */
-                // 占比数值 + %
-                String proportionItem=dfOne.format(middleLowAssets/sumOfAssets*100)+"%";
+                String proportionItem="0%";
+
+                if(middleLowAssets!=0){
+                    // 占比数值
+                    middleLowProportion=Float.parseFloat(dfOne.format(middleLowAssets/sumOfAssets*100));
+                    /** 中低风险资产 */
+                    // 占比数值 + %
+                    proportionItem=Float.parseFloat(dfOne.format(middleLowAssets/sumOfAssets*100))+"%";
+                }
+
                 map.put("projectItem","中低");
                 map.put("assetItem",dfTwo.format(middleLowAssets).equals(".00")?"0":dfTwo.format(middleLowAssets));
                 map.put("progressItem",proportionItem);
                 map.put("proportionItem",proportionItem);
             }else if(i==2){
-                middleProportion=Float.parseFloat(dfOne.format(middleAssets/sumOfAssets*100));
-                /** 中风险资产 */
-                String proportionItem=dfOne.format(middleAssets/sumOfAssets*100)+"%";
+                String proportionItem="0%";
+
+                if(middleAssets!=0){
+                    middleProportion=Float.parseFloat(dfOne.format(middleAssets/sumOfAssets*100));
+                    /** 中风险资产 */
+                    proportionItem=Float.parseFloat(dfOne.format(middleAssets/sumOfAssets*100))+"%";
+                }
+
                 map.put("projectItem","中等");
                 map.put("assetItem",dfTwo.format(middleAssets).equals(".00")?"0":dfTwo.format(middleAssets));
                 map.put("progressItem",proportionItem);
                 map.put("proportionItem",proportionItem);
             }else if(i==3){
-                middleHighProportion=Float.parseFloat(dfOne.format(middleHighAssets/sumOfAssets*100));
-                /** 中高资产 */
-                String proportionItem=dfOne.format(middleHighAssets/sumOfAssets*100)+"%";
+                String proportionItem="0%";
+
+                /** 当被除数为不等于 0 时才可以进行计算 */
+                if(middleHighAssets!=0){
+                    middleHighProportion=Float.parseFloat(dfOne.format(middleHighAssets/sumOfAssets*100));
+                    /** 中高资产 */
+                    proportionItem=Float.parseFloat(dfOne.format(middleHighAssets/sumOfAssets*100))+"%";
+                }
+
                 map.put("projectItem","中高");
                 map.put("assetItem",dfTwo.format(middleHighAssets).equals(".00")?"0":dfTwo.format(middleHighAssets));
                 map.put("progressItem",proportionItem);

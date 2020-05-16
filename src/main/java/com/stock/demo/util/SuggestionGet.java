@@ -104,6 +104,11 @@ public class SuggestionGet {
      */
     public Map<String,Object> conservativeGet(float low, float middle_low, float middle, float middle_high){
         /** 声明 判定结果（分配合适 & 过于保守 & 过于激进） */
+        System.out.println(low);
+        System.out.println(middle_low);
+        System.out.println(middle);
+        System.out.println(middle_high);
+
         String result=null;
         String suggestions=null;
 
@@ -113,8 +118,13 @@ public class SuggestionGet {
             result="分配合适";
             suggestions="保持目前的低风险资产持有率，获取稳健收益";
         }else if(low<100){
-            result="过于激进";
-            suggestions="    目前资产风险较高，已超出您的风险承受能力，建议适当增加低风险资产的持仓，降低其他更高风险资产的持仓。";
+            if(low==0 && middle_low==0 && middle==0 && middle_high==0){
+                result="暂无建议";
+                suggestions=" ";
+            }else{
+                result="过于激进";
+                suggestions="    目前资产风险较高，已超出您的风险承受能力，建议适当增加低风险资产的持仓，降低其他更高风险资产的持仓。";
+            }
         }
         resultMap.put("result",result);
         resultMap.put("suggestions",suggestions);
@@ -162,6 +172,9 @@ public class SuggestionGet {
                 // 中 或 中高风险资产占比：偏高
                 result="过于激进";
                 suggestions="    目前资产风险较高，已超出您的风险承受能力，建议适当增加低风险和中低风险资产的持仓，降低其他更高风险资产的持仓占比。";
+            }else if(low==0 && middle_low==0 && middle==0 && middle_high==0){
+                result="暂无建议";
+                suggestions=" ";
             }
         }
         resultMap.put("result",result);
@@ -218,6 +231,9 @@ public class SuggestionGet {
                 // 中低风险占比：偏高
                 result="过于激进";
                 suggestions="    目前资产风险较高，已超出您的风险承受能力，建议适当增加低风险资产的持仓，降低中低风险资产的持仓，保障资金安全。";
+            }else if(low==0 && middle_low==0 && middle==0 && middle_high==0){
+                result="暂无建议";
+                suggestions=" ";
             }else{
                 result="过于激进";
                 suggestions="    目前资产风险较高，已超出您的风险承受能力，建议适当增加较低风险资产的持仓，降低其他更高风险资产的持仓，保障资金安全。";
@@ -265,6 +281,9 @@ public class SuggestionGet {
                 // 中高风险超过30%：风险偏高
                 result="过于激进";
                 suggestions="    目前资产风险较高，已超出您的风险承受能力，建议适当增加较低风险资产的持仓，降低中高风险资产的持仓，以保障资金安全。";
+            }else if(low==0 && middle_low==0 && middle==0 && middle_high==0){
+                result="暂无建议";
+                suggestions=" ";
             }else{
                 // 中、中低资产过多
                 result="过于激进";

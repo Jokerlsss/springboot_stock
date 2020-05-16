@@ -9,6 +9,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.stereotype.Component;
 
 import java.text.DecimalFormat;
+import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
 
@@ -57,6 +58,87 @@ public class UpdateEarn {
 
     @Autowired
     private UpdateEarn updateEarn;
+
+    @Autowired
+    private DateOprate dateOprate;
+
+    /**
+     * 新增收益记录
+     */
+    public void insertEarnings() throws ParseException {
+        // 查询：financialProduct 代码  返回值：List<financialProduct>
+        QueryWrapper<FinancialProduct> listQueryWrapper=new QueryWrapper<>();
+        listQueryWrapper.eq("listingStatus","在市");
+        // 排除定期
+        listQueryWrapper.ne("productType","定期");
+
+        List<FinancialProduct> financialProductList=financialProductService.selectByWrapperReturnList(listQueryWrapper);
+        for(int i=0;i<financialProductList.size();i++){
+            if(financialProductList.get(i).getProductType().equals("股票")){
+                // 上次收益记录 = 查找上次收益记录(产品代码)
+                String productCode=financialProductList.get(i).getProductCode();
+                try {
+                    // 查询：根据代码查找 earnings 表
+                    StockEarnings stockEarnings=stockEarningsMapper.selectLastStockEarnings(productCode);
+
+                    // 赋值：查询到的上次收益记录
+                    Float lastDailyChange=stockEarnings.getDailyChange();
+                    Date lastEarningsDate=stockEarnings.getEarningsDate();
+                    Float lastMarketValue=stockEarnings.getStockMarketValue();
+                    // 区分：类型用于在新增时区分调用的 service 层
+                    String productType="股票";
+
+                    System.out.println("产品代码："+productCode+" 类型：股票 开始计算 ->");
+                    // 计算 & 生成：本次收益记录
+                    dateOprate.countEarnings(productCode,lastDailyChange,lastEarningsDate,lastMarketValue,productType);
+                } catch (ParseException e) {
+                    throw e;
+                }
+            }else if(financialProductList.get(i).getProductType().equals("基金")){
+                // 上次收益记录 = 查找上次收益记录(产品代码)
+                String productCode=financialProductList.get(i).getProductCode();
+                try {
+                    // 查询：根据代码查找 earnings 表
+                    FundEarnings fundEarnings=fundEarningsMapper.selectLastOneEarnings(productCode);
+
+                    // 赋值：查询到的上次收益记录
+                    Float lastDailyChange=fundEarnings.getDailyChange();
+                    Date lastEarningsDate=fundEarnings.getEarningsDate();
+                    Float lastMarketValue=fundEarnings.getNetWorth();
+                    // 区分：类型用于在新增时区分调用的 service 层
+                    String productType="基金";
+
+                    System.out.println("产品代码："+productCode+" 类型：基金 开始计算 ->");
+                    // 计算 & 生成：本次收益记录
+                    dateOprate.countEarnings(productCode,lastDailyChange,lastEarningsDate,lastMarketValue,productType);
+                } catch (ParseException e) {
+                    throw e;
+                }
+            }else if(financialProductList.get(i).getProductType().equals("黄金")){
+                // 上次收益记录 = 查找上次收益记录(产品代码)
+                String productCode=financialProductList.get(i).getProductCode();
+                try {
+                    // 查询：根据代码查找 earnings 表
+                    GoldEarnings goldEarnings=goldEarningsMapper.selectLastOneEarnings(productCode);
+
+                    // 赋值：查询到的上次收益记录
+                    Float lastDailyChange=goldEarnings.getDailyChange();
+                    Date lastEarningsDate=goldEarnings.getEarningsDate();
+                    Float lastMarketValue=goldEarnings.getGoldPrice();
+                    // 区分：类型用于在新增时区分调用的 service 层
+                    String productType="黄金";
+
+                    System.out.println("产品代码："+productCode+" 类型：黄金 开始计算 ->");
+                    // 计算 & 生成：本次收益记录
+                    dateOprate.countEarnings(productCode,lastDailyChange,lastEarningsDate,lastMarketValue,productType);
+                } catch (ParseException e) {
+                    throw e;
+                }
+            }
+        }
+        updateEarn.updateDayEarn(null);
+        updateEarn.updateHoldEarn(null);
+    }
 
     /** 一年收益率 = 计算一年收益率的方法（productCode,productType）：保留两位小数*/
     public float getEarnRate(String productCode,String productType,int month){
