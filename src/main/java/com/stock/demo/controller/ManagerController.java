@@ -5,7 +5,10 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.stock.demo.pojo.Manager;
 import com.stock.demo.service.ManagerService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -23,6 +26,36 @@ public class ManagerController implements BaseController<Manager>{
 
     @Autowired
     ManagerService managerService;
+
+    @GetMapping("login")
+    public int login(@RequestParam(value="managerName",required = false) String managerName,
+                     @RequestParam(value="managerPassword",required = false) String managerPassword){
+        int flag=0;
+        int loginSuccess=1;
+        int loginFail=2;
+
+            // 登录
+            /** 查出数据库中对应该昵称的密码 */
+            Manager manager=managerService.loadByName(managerName);
+            if(null==manager){
+                return flag;
+            }else{
+                BCryptPasswordEncoder encoder=new BCryptPasswordEncoder();
+                String realPassword=manager.getManagerPassword();
+
+                /** 将数据库中的密码进行解密并匹配 */
+                boolean isLogin=encoder.matches(managerPassword,realPassword);
+
+                if(isLogin){
+                    // 登录成功
+                    flag=loginSuccess;
+                }else{
+                    // 登录失败
+                    flag=loginFail;
+                }
+            }
+        return flag;
+    }
 
     @Override
     public List<Manager> list() {

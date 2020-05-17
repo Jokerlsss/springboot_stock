@@ -70,6 +70,47 @@ public class FinancialProductController implements BaseController<FinancialProdu
     @Autowired
     DateOprate dateOprate;
 
+    /**
+     * 后台管理系统中查看项目详情
+     * @param productCode
+     * @return
+     */
+    @GetMapping("getProductDetail")
+    public Map<String,Object> getProductDetail(@RequestParam(value = "productCode",required = false) String productCode){
+        /**
+         *  productCode -> productType -> 进入具体 service 查
+         */
+        System.out.println("come in getProductDetail");
+        Map<String,Object> resultMap=new HashMap<String,Object>(10);
+
+        QueryWrapper financialProductQueryWrapper=new QueryWrapper<>();
+        financialProductQueryWrapper.eq("productCode",productCode);
+        FinancialProduct financialProduct=financialProductService.selectByWrapperReturnBean(financialProductQueryWrapper);
+
+        /** 获取类型 => 根据类型查找对应的详情信息 */
+        String productType=financialProduct.getProductType();
+        if(productType.equals("股票")){
+            Stock stock=stockService.selectByWrapperReturnBean(financialProductQueryWrapper);
+            float issuePrice=stock.getIssuePrice();
+            resultMap.put("issuePrice",issuePrice);
+        }else if(productType.equals("黄金")){
+            Gold gold=goldService.selectByWrapperReturnBean(financialProductQueryWrapper);
+            float issuePrice=gold.getIssuePrice();
+            resultMap.put("issuePrice",issuePrice);
+        }else if(productType.equals("基金")){
+            Fund fund=fundService.selectByWrapperReturnBean(financialProductQueryWrapper);
+            float issuePrice=fund.getIssuePrice();
+            String assetSize=fund.getAssetSize();
+            String fundManager=fund.getFundManager();
+            String fundType=fund.getFundType();
+            resultMap.put("issuePrice",issuePrice);
+            resultMap.put("assetSize",assetSize);
+            resultMap.put("fundManager",fundManager);
+            resultMap.put("fundType",fundType);
+        }
+        return resultMap;
+    }
+
 
     /**
      * 在市场中，搜索项目

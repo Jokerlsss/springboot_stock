@@ -36,6 +36,9 @@ class DemoApplicationTests {
     private UserMapper userMapper;
 
     @Autowired
+    private ManagerMapper managerMapper;
+
+    @Autowired
     private StockMapper stockMapper;
 
     @Autowired
@@ -246,13 +249,13 @@ class DemoApplicationTests {
      */
     @Test
     public void insertUser(){
-        User user=new User();
-        user.setUserName("Jokerls");
-        user.setInvestmentCharacter("保守");
+//        User user=new User();
+        Manager manager=new Manager();
+        manager.setManagerName("admin");
 
         BCryptPasswordEncoder encoder=new BCryptPasswordEncoder();
-        user.setUserPassword(encoder.encode("123"));
-        userMapper.insert(user);
-        System.out.println("成功录入用户");
+        manager.setManagerPassword(encoder.encode("123"));
+        managerMapper.insert(manager);
+        System.out.println("成功录入管理员");
     }
 }

@@ -46,7 +46,7 @@ public class ManangerServiceImpl implements ManagerService {
 
     @Override
     public Manager load(Long id) {
-        return null;
+        return managerMapper.selectById(id);
     }
 
     @Override
@@ -61,7 +61,7 @@ public class ManangerServiceImpl implements ManagerService {
 
     @Override
     public Manager loadByName(String name) {
-        return null;
+        return managerMapper.selectByName(name);
     }
 
     @Override
